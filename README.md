@@ -1,10 +1,6 @@
-# GenerateCT: Text-Conditional Generation of 3D Chest CT Volumes
+# CT-CLIP: A foundation model utilizing chest CT volumes and radiology reports for supervised-level zero-shot detection of abnormalities
+Welcome to the official repository of CT-CLIP, a pioneering work in 3D medical imaging with a particular focus on chest CT volumes. CT-CLIP provides an open-source codebase, pre-trained models, and a unique dataset (CT-RATE) of chest CT volumes paired with radiology text reports, all freely accessible to researchers.
 
-Welcome to the official repository of GenerateCT, a pioneering work in text-conditional 3D medical image generation with a particular focus on chest CT volumes. GenerateCT provides an open-source codebase, pre-trained models for text-to-CT generation, and a unique, generated dataset, all freely accessible to researchers.
-
-<p align="center">
-  <img src="figures/examples.gif" width="100%">
-</p>
 
 
 ## Requirements
@@ -104,7 +100,7 @@ You can download the models from the following links:
 By leveraging these pretrained models, you can easily reproduce our results or further extend our work.
 
 
-## Example Data
+## Our Dataset (CT-RATE)
 
 Explore and experiment with our example data, specifically curated for training the CT-ViT, Transformer, and Super Resolution Diffusion networks.
 
