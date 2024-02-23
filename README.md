@@ -1,5 +1,10 @@
 # CT-CLIP: A foundation model utilizing chest CT volumes and radiology reports for supervised-level zero-shot detection of abnormalities
-Welcome to the official repository of CT-CLIP, a pioneering work in 3D medical imaging with a particular focus on chest CT volumes. CT-CLIP provides an open-source codebase, pre-trained models, and a unique dataset (CT-RATE) of chest CT volumes paired with radiology text reports, all freely accessible to researchers.
+Welcome to the official repository of CT-CLIP, a pioneering work in 3D medical imaging with a particular focus on chest CT volumes. CT-CLIP provides an open-source codebase, pre-trained models, and a unique dataset (CT-RATE) of chest CT volumes paired with radiology text reports, all freely accessible to researchers. You can access the dataset and pretrained model weights via the [HuggingFace repository](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE).
+
+
+<p align="center">
+  <img src="figures/CT-CLIP.png" width="100%">
+</p>
 
 
 
@@ -8,15 +13,15 @@ Welcome to the official repository of CT-CLIP, a pioneering work in 3D medical i
 Before you start, you must install the necessary dependencies. To do so, execute the following commands:
 
 ```setup
-# Navigate to the 'super_resolution' directory and install the required packages
-cd super_resolution
+# Navigate to the 'transformer_maskgit' directory and install the required packages
+cd transformer_maskgit
 pip install -e .
 
 # Return to the root directory
 cd ..
 
-# Navigate to the 'transformer_maskgit' directory and install its required packages
-cd transformer_maskgit
+# Navigate to the 'CT_CLIP' directory and install its required packages
+cd CT_CLIP
 pip install -e .
 
 # Return to the root directory
@@ -24,65 +29,19 @@ cd ..
 ```
 After following these steps, your environment should be properly set up with all required packages.
 
-The MaskGIT Transformer model necessitates the use of an A100 GPU, with 80G of VRAM, for efficient training and inference operations, due to the model's considerable size.
+The CT-CLIP Transformer model necessitates the use of an A100 GPU with 80GB of VRAM for a batch size of 8 for efficient training, due to the model's considerable size. Inference can be done in smaller GPUs. The patch sizes of the image encoder can be adjusted to make it fit onto smaller GPUs, although this will affect the model performance in smaller pathologies. Batch size can also be lowered, but this is not recommended for CLIP training as it will not learn negative images with lower batch sizes
 
 ## Training
 
-Train the CT-ViT model by executing the following command in your terminal:
+For details on the training of zero-shot CT-CLIP and fine-tuned CT-CLIP models, please navigate to [scripts](scripts).
 
-```train
-accelerate launch --use_fsdp train_ctvit.py
-```
-To train the MaskGIT Transformer model, use the command provided below:
-
-```train
-accelerate launch train_transformer.py
-```
-
-Lastly, train the Super Resolution Diffusion model using the multi-line command outlined here:
-
-```train
-accelerate launch \
-    --multi_gpu \
-    --mixed_precision=fp16 \
-    --num_machines=1 \
-    train_superres.py --config superres.yaml --stage 2 --bs 8
-```
-Remember to replace the respective parameters with the ones relevant to your setup if necessary.
-
+For details on the training of text classifier, please navigate to [text_classifier](text_classifier).
 
 ## Inference
 
-To run inference on the CT-ViT model, use the following command:
+For details on the inference and evaluation of zero-shot CT-CLIP and fine-tuned CT-CLIP models, please navigate to [scripts](scripts).
 
-```eval
-python inference_ctvit.py
-```
-
-To infer with the MaskGIT Transformer model, execute the command below:
-
-```eval
-python inference_transformer.py
-```
-
-Lastly, for inference using the Super Resolution Diffusion model, issue this multi-line command:
-
-```eval
-accelerate launch \
-    --multi_gpu \
-    --mixed_precision=fp16 \
-    --num_machines=1 \
-    inference_superres.py --config superres_inference.yaml --stage 2 --bs 2
-```
-Remember to adjust the parameters as per your configuration requirements. 
-
-## Sampling Times
-
-Our performance metrics detail the sampling times for generating and upscaling 3D Chest CT volumes. It is important to note that these figures were derived from our tests on an NVIDIA A100 80GB GPU and may vary based on your system's configuration.
-
-- **3D Chest CT Generation:** By leveraging the capabilities of CT-ViT and MaskGIT on an NVIDIA A100 80GB GPU, we are able to generate a low-resolution 3D Chest CT volume (128x128x201) from a given text input. This process takes approximately 30 seconds, making it efficient for real-time applications.
-
-- **Text-Conditional Upsampling:** We utilize a layer-by-layer upsampling technique via the Diffusion Model to enhance the resolution of the generated Chest CT from 128x128x201 to 512x512x201. Each layer's upsampling operation is performed swiftly, taking less than a second on the same GPU. The entire upsampling process for all 201 slices of the CT volume takes around 150 seconds.
+For details on the inference of text classifier, please navigate to [text_classifier](text_classifier).
 
 
 ## Pretrained Models
@@ -91,50 +50,27 @@ For your convenience, we provide access to pretrained models directly. These mod
 
 You can download the models from the following links:
 
-- **CT-ViT Model**: [Download Here](https://huggingface.co/generatect/GenerateCT/resolve/main/pretrained_models/ctvit_pretrained.pt)
+- **CT-CLIP Model**: [Download Here](##addlater##)
 
-- **Transformer Model**: [Download Here](https://huggingface.co/generatect/GenerateCT/resolve/main/pretrained_models/transformer_pretrained.pt)
+- **CT-VocabFine Model**: [Download Here](##addlater##)
 
-- **Super Resolution Diffusion Model**: [Download Here](https://huggingface.co/generatect/GenerateCT/resolve/main/pretrained_models/superres_pretrained.pt)
+- **CT-LiPro Model**: [Download Here](##addlater##)
+  
+- **Text Classifier Model**: [Download Here](##addlater##)
 
 By leveraging these pretrained models, you can easily reproduce our results or further extend our work.
 
 
 ## Our Dataset (CT-RATE)
 
-Explore and experiment with our example data, specifically curated for training the CT-ViT, Transformer, and Super Resolution Diffusion networks.
+A major challenge in computational research in 3D medical imaging is the lack of comprehensive datasets. Addressing this issue, we present CT-RATE, the first 3D medical imaging dataset that pairs images with textual reports. CT-RATE consists of 25,692 non-contrast chest CT volumes, expanded to 50,188 through various reconstructions, from 21,304 unique patients, along with corresponding radiology text reports, multi-abnormality labels, and metadata. We divided the cohort into two groups: 20,000 patients were allocated to the training set and 1,304 to the validation set. Our folders are structured as split_patientID_scanID_reconstructionID. For instance, "valid_53_a_1" indicates that this is a CT volume from the validation set, scan "a" from patient 53, and reconstruction 1 of scan "a". This naming convention applies to all files.
 
-- [Download Example Data](https://huggingface.co/generatect/GenerateCT/resolve/main/example_data.zip)
+<p align="center">
+  <img src="figures/CT-RATE.png" width="100%">
+</p>
 
-Feel free to utilize this example data to gain insights into the training process of the components of GenerateCT.
+You can download and use the dataset in this work in [HuggingFace repository](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE). 
 
-
-## Generated Data
-
-Explore our generated dataset, consisting of 2286 synthetic CT volumes and their corresponding text prompts. 
-
-- [Download Generated Dataset](https://huggingface.co/generatect/GenerateCT/tree/main/generated_data)
-
-The dataset includes synthetic chest CT volumes, medical language text prompts used in the generation process, and abnormality labels. It was utilized in the supplementary section of our paper to showcase the capabilities of GenerateCT. Feel free to utilize this dataset for research, analysis, or to gain a deeper understanding of the generated CT volumes and their associated text prompts. 
-
-
-## Evaluation
-
-In our evaluation process, we employed various metrics to assess the performance of our generated CT volumes. 
-
-- **FID and FVD Metrics**: To calculate the Fréchet Inception Distance (FID) and Fréchet Video Distance (FVD), we utilized the evaluation script from the [StyleGAN-V repository](https://github.com/universome/stylegan-v).
-
-- **CLIP Score Metric**: For the CLIP score evaluation, we relied on the [torchmetrics implementation](https://torchmetrics.readthedocs.io/en/stable/multimodal/clip_score.html).
-
-Feel free to explore these metrics to gain a comprehensive understanding of the quality and performance of our generated CT volumes.
-
-
-## Citing Us
-If you use CT-RATE or CT-CLIP, we would appreciate your references to our paper.
 
 ## License
 We are committed to fostering innovation and collaboration in the research community. To this end, all elements of CT-CLIP are released under a [Creative Commons Attribution (CC-BY-NC-SA) license](https://creativecommons.org/licenses/by-nc-sa/4.0/). This licensing framework ensures that our contributions can be freely used for non-commercial research purposes, while also encouraging contributions and modifications, provided that the original work is properly cited and any derivative works are shared under similar terms.
-
-## Acknowledgements
-We would like to express our gratitude to the following repositories for their invaluable contributions to our work: [Phenaki Pytorch by Lucidrains](https://github.com/lucidrains/phenaki-pytorch), [Phenaki by LAION-AI](https://github.com/LAION-AI/phenaki), [Imagen Pytorch by Lucidrains](https://github.com/lucidrains/imagen-pytorch), [StyleGAN-V by universome](https://github.com/universome/stylegan-v), and [CT Net Models by Rachellea](https://github.com/rachellea/ct-net-models). We extend our sincere appreciation to these researchers for their exceptional open-source efforts. If you utilize our models and code, we kindly request that you also consider citing these works to acknowledge their contributions.
-
