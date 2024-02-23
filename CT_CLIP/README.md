@@ -7,7 +7,7 @@ This module provides an implementation of CT-CLIP, leveraging CT-ViT as the imag
 To install CT-CLIP, execute the following command:
 
 ```bash
-$ pip install .
+$ pip install -e .
 ```
 
 This will install the necessary dependencies and enable you to use CT-CLIP.
