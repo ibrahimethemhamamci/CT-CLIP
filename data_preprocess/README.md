@@ -1,6 +1,6 @@
 ## CT-Clip Preprocess
 
-This section of the repository contains preprocessing scripts specifically designed for handling CT scans. These scripts are responsible for creating train and validation splits. They perform various transformations, including converting nii.gz files to npz files, normalizing pixel values to Hounsfield units (HU), clipping HU values between (-1000,1000), adjusting volume orientations, and standardizing x, y, and z spacings to 0.75, 0.75, and 1.5, respectively.
+This section of the repository contains preprocessing scripts specifically designed for handling CT scans. These scripts perform preprocessing steps, including converting nii.gz files to npz files, normalizing pixel values to Hounsfield units (HU), clipping HU values between (-1000,1000), adjusting volume orientations, and standardizing x, y, and z spacings to 0.75, 0.75, and 1.5, respectively.
 
 ## Usage
 
