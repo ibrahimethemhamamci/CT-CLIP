@@ -7,7 +7,7 @@ This module is an adaptation of the transformer_maskgit module from [GenerateCT]
 To install the CT-CLIP image encoder, please run:
 
 ```bash
-$ pip install .
+$ pip install -e .
 ```
 
 This will install the necessary dependencies and allow you to use the CT-CLIP image encoder.
