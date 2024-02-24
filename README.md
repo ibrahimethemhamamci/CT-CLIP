@@ -69,7 +69,7 @@ A major challenge in computational research in 3D medical imaging is the lack of
   <img src="figures/CT-RATE.png" width="100%">
 </p>
 
-You can download and use the dataset in this work in [HuggingFace repository](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE). 
+You can download the dataset used in this work via the [HuggingFace repository](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE). 
 
 
 ## License
