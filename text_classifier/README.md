@@ -1,6 +1,6 @@
 ## Text Classifier
 
-This module encompasses the training and inference scripts for the text classifier model. It serves the purpose of extracting pathology labels from datasets through partial manual annotations. The manual annotations utilized for training and evaluating the model are accessible in the [CT Rate dataset](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE).
+This module encompasses the training and inference scripts for the text classifier model. It serves the purpose of extracting abnormality labels from datasets through partial manual annotations. The manual annotations utilized for training and evaluating the model are accessible in the [CT Rate dataset](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE).
 
 ## Installation
 
