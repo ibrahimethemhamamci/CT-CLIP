@@ -4,13 +4,7 @@ This module encompasses the training and inference scripts for the text classifi
 
 ## Installation
 
-Please note that the Transformers library version utilized in this model differs from CT-CLIP. To install the required version, execute the following command:
-
-```bash
-$ pip install transformers==4.35.2 
-```
-
-Ensure the installation of the correct Transformers version (4.30.1) prior to running scripts for CT-CLIP.
+Please follow the installation of [CT-CLIP](.).
 
 ## Training
 
@@ -25,5 +19,5 @@ $ python train.py
 Adjust the file paths within the infernece script to point to "test_all.csv" (which contains all accessions and reports) and "text_transformer_model.pth" for your downloaded dataset and model. Subsequently, execute the following command:
 
 ```bash
-$ python inference.py
+$ python infer.py
 ```
