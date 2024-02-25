@@ -40,8 +40,8 @@ if device == 'cuda':
     print("Number of GPU available:{} --> {} \n".format(n_gpu,torch.cuda.get_device_name()))
 
 
-df = pd.read_csv('path_to_train_csv')
-df2 = pd.read_csv('path_to_valid_csv')
+df = pd.read_csv('path_to_train_text_classifier_csv')
+df2 = pd.read_csv('path_to_valid_text_classifier_csv')
 
 print('average sentence length: ', df['Report Impression'].str.split().str.len().mean())
 print('stdev sentence length: ', df['Report Impression'].str.split().str.len().std())
