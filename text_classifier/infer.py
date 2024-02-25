@@ -69,7 +69,7 @@ test_dataloader = DataLoader(test_data, sampler=test_sampler, batch_size=batch_s
 dataloaders['test'] = test_dataloader
 
 
-model_path = 'path_to_CTBertClassifier_best_pth'
+model_path = 'path_to_text_transformer_model_pth'
 
 model = CTBertClassifier(n_classes=num_labels)
 model.load_pretrained(model_path)
