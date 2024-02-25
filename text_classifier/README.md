@@ -8,7 +8,7 @@ Please follow the installation of [CT-CLIP](.).
 
 ## Training
 
-Adjust the file paths within the training script to point to "train_text_classifier.csv" and "valid_text_classifier.csv" for your downloaded dataset. Subsequently, execute the following command:
+Adjust the file paths within the training script to point to `train_text_classifier.csv` and `valid_text_classifier.csv` for your downloaded dataset. Subsequently, execute the following command:
 
 ```bash
 $ python train.py
@@ -16,7 +16,7 @@ $ python train.py
 
 ## Inference
 
-Adjust the file paths within the infernece script to point to "test_all.csv" (which contains all accessions and reports) and "text_transformer_model.pth" for your downloaded dataset and model. Subsequently, execute the following command:
+Adjust the file paths within the infernece script to point to `test_all.csv` (which contains all accessions and reports) and `text_transformer_model.pth` for your downloaded dataset and model. Subsequently, execute the following command:
 
 ```bash
 $ python infer.py
