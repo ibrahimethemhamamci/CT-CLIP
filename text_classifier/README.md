@@ -4,7 +4,7 @@ This module encompasses the training and inference scripts for the text classifi
 
 ## Installation
 
-Please follow the installation of [CT-CLIP](.).
+Please follow the installation of [CT-CLIP](..).
 
 ## Training
 
