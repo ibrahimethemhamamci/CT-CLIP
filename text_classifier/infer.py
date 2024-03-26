@@ -2,27 +2,43 @@
 """
 Created on Sat Feb 24 03:03:25 2024
 
-@author: mfdasdelen
+@author: zehra
 """
 
 import pandas as pd
 import numpy as np
 import os
 import torch
-import pickle
-from torch.nn import BCEWithLogitsLoss
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MultiLabelBinarizer
-from sklearn.metrics import classification_report, confusion_matrix, multilabel_confusion_matrix, f1_score, accuracy_score
-from transformers import AutoConfig, AutoTokenizer, AutoModel
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from tqdm import tqdm
 from torch.optim import AdamW
 import time
+import argparse as ap
 
 from model_trainer import ModelTrainer
-from classifier import CTBertClassifier
+from classifier import RadBertClassifier
 from dataset import CTDataset
+
+parser = ap.ArgumentParser()
+parser.add_argument(
+    '--checkpoint',
+    help='model_path',
+    required=True,
+    default=None) 
+
+parser.add_argument(
+    '--dataset',
+    help='multiple data file inference',
+    required=False,
+    default=None)
+
+parser.add_argument(
+    '--single_data',
+    help='single data file inference',
+    required=False,
+    default=None)  
+
+args = parser.parse_args()
 
 def get_unique_folder(base_folder):
     counter = 1
@@ -34,7 +50,20 @@ def get_unique_folder(base_folder):
     
     return new_folder
 
-save_path = 'Results_infer'
+
+if not args.dataset and not args.single_data:
+  raise ValueError("Either --dataset or --single_data argument is required")
+
+if args.dataset and args.single_data:
+  raise ValueError("Both --dataset and --single_data arguments cannot be used simultaneously")
+
+
+if args.dataset:
+  save_path = 'Results_infer_'+args.dataset
+else:
+  save_path = 'Results_infer_'+args.single_data
+
+
 save_path = get_unique_folder(save_path)
 os.mkdir(save_path)
 
@@ -46,12 +75,15 @@ if device == 'cuda':
     n_gpu = torch.cuda.device_count()
     print("Number of GPU available:{} --> {} \n".format(n_gpu,torch.cuda.get_device_name()))
 
+if args.dataset:
+  df = pd.read_csv(os.path.join(args.dataset,'test.csv')) 
+else:
+  df = pd.read_csv(args.single_data) 
 
-df = pd.read_csv('path_to_test_all_csv')
-
-label_cols = ['Medical material','Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion','Coronary artery wall calcification', 'Hiatal hernia','Lymphadenopathy', 'Emphysema', 'Atelectasis', 'Lung nodule','Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion', 'Mosaic attenuation pattern','Peribronchial thickening', 'Consolidation', 'Bronchiectasis','Interlobular septal thickening', 'Tree in bud', 'Thymic remnant']
+label_cols = ['Medical material','Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion','Coronary artery wall calcification', 'Hiatal hernia','Lymphadenopathy', 'Emphysema', 'Atelectasis', 'Lung nodule','Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion', 'Mosaic attenuation pattern','Peribronchial thickening', 'Consolidation', 'Bronchiectasis','Interlobular septal thickening']
 num_labels = len(label_cols)
 print('Label columns: ', label_cols)
+print('\nNumber of test data: ',len(df))
 
 # Create dataloader
 
@@ -69,10 +101,10 @@ test_dataloader = DataLoader(test_data, sampler=test_sampler, batch_size=batch_s
 dataloaders['test'] = test_dataloader
 
 
-model_path = 'path_to_text_transformer_model_pth'
+model_path = args.checkpoint
 
-model = CTBertClassifier(n_classes=num_labels)
-model.load_pretrained(model_path)
+model = RadBertClassifier(n_classes=num_labels)
+model.load_state_dict(torch.load(model_path))
 model = model.to(device)
 print(model.eval())
 
@@ -88,6 +120,7 @@ optimizer_grouped_parameters = [
 ]
 
 optimizer = AdamW(optimizer_grouped_parameters,lr=2e-5)
+scheduler = None
 # optimizer = AdamW(model.parameters(),lr=2e-5)  # Default optimization
 epochs = 0
 
@@ -97,6 +130,7 @@ trainer = ModelTrainer(model,
                        num_labels,
                        epochs,
                        optimizer,
+                       scheduler,
                        device,
                        save_path,
                        label_cols)
@@ -109,10 +143,11 @@ print('---------------------------------------------------------------')
 print('Inferring Complete')
 print('Infer time: ',finish-start)
 
-columns = ['AccessionNo','Medical material','Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion','Coronary artery wall calcification', 'Hiatal hernia','Lymphadenopathy', 'Emphysema', 'Atelectasis', 'Lung nodule','Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion', 'Mosaic attenuation pattern','Peribronchial thickening', 'Consolidation', 'Bronchiectasis','Interlobular septal thickening', 'Tree in bud', 'Thymic remnant']
+columns = ['AccessionNo','Medical material','Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion','Coronary artery wall calcification', 'Hiatal hernia','Lymphadenopathy', 'Emphysema', 'Atelectasis', 'Lung nodule','Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion', 'Mosaic attenuation pattern','Peribronchial thickening', 'Consolidation', 'Bronchiectasis','Interlobular septal thickening']
 
 inferred_data = pd.DataFrame()
 inferred_data[columns[0]] = df['AccessionNo']
+inferred_data['report_text'] = df['report_text']
 
 for col,i in zip(columns[1:],range(num_labels)):
     inferred_data[col] = predicted_labels[:,i]
