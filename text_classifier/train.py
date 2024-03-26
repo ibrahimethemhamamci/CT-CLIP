@@ -2,20 +2,41 @@ import pandas as pd
 import numpy as np
 import os
 import torch
-import pickle
-from torch.nn import BCEWithLogitsLoss
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MultiLabelBinarizer
-from sklearn.metrics import classification_report, confusion_matrix, multilabel_confusion_matrix, f1_score, accuracy_score
-from transformers import AutoConfig, AutoTokenizer, AutoModel
 from tqdm import tqdm
 from torch.optim import AdamW
 import time
+import argparse as ap
 
 from model_trainer import ModelTrainer
-from classifier import CTBertClassifier
+from classifier import RadBertClassifier
 from dataset import CTDataset
+from cosine_annealing_warmup import CosineAnnealingWarmupRestarts
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+
+parser = ap.ArgumentParser()
+parser.add_argument(
+    '--dataset',
+    help='dataset',
+    required=True,
+    default=None) 
+
+parser.add_argument(
+    '--augment',
+    help='augmentation',
+    required=False,
+    default=0,
+    type=int) 
+
+parser.add_argument(
+    '--scheduler',
+    help='scheduler, cawr or rlop',
+    required=False,
+    default=None) 
+
+args = parser.parse_args()
+
+augment = True if args.augment == 1 else False
 
 def get_unique_folder(base_folder):
     counter = 1
@@ -27,7 +48,7 @@ def get_unique_folder(base_folder):
     
     return new_folder
 
-save_path = 'Results'
+save_path = 'Results_'+os.path.basename(args.dataset)
 save_path = get_unique_folder(save_path)
 os.mkdir(save_path)
 
@@ -40,11 +61,11 @@ if device == 'cuda':
     print("Number of GPU available:{} --> {} \n".format(n_gpu,torch.cuda.get_device_name()))
 
 
-df = pd.read_csv('path_to_train_text_classifier_csv')
-df2 = pd.read_csv('path_to_valid_text_classifier_csv')
+df = pd.read_csv(os.path.join(args.dataset,'train.csv')) 
+df2 = pd.read_csv(os.path.join(args.dataset,'val.csv'))
 
-print('average sentence length: ', df['Report Impression'].str.split().str.len().mean())
-print('stdev sentence length: ', df['Report Impression'].str.split().str.len().std())
+print('average sentence length: ', df['report_text'].str.split().str.len().mean())
+print('stdev sentence length: ', df['report_text'].str.split().str.len().std())
 
 
 cols = df.columns
@@ -60,20 +81,20 @@ max_length = 512
 num_workers = 4
 
 batch_size = 32
-train_data = CTDataset(df, num_labels, label_cols, max_length)
+train_data = CTDataset(df, num_labels, label_cols, max_length, augment = args.augment)
 train_sampler = RandomSampler(train_data)
 train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=batch_size,
                               num_workers=num_workers, pin_memory=True)
 dataloaders['train'] = train_dataloader
 
-test_data = CTDataset(df2, num_labels, label_cols, max_length)
-test_sampler = SequentialSampler(test_data)
-test_dataloader = DataLoader(test_data, sampler=test_sampler, batch_size=batch_size,
+val_data = CTDataset(df2, num_labels, label_cols, max_length)
+val_sampler = SequentialSampler(val_data)
+val_dataloader = DataLoader(val_data, sampler=val_sampler, batch_size=batch_size,
                              num_workers=num_workers, pin_memory=True)
-dataloaders['val'] = test_dataloader
+dataloaders['val'] = val_dataloader
 
 
-model = CTBertClassifier(n_classes=num_labels)
+model = RadBertClassifier(n_classes=num_labels)
 model = model.to(device)
 
 # setting custom optimization parameters
@@ -86,16 +107,30 @@ optimizer_grouped_parameters = [
      'weight_decay_rate': 0.0}
 ]
 
-optimizer = AdamW(optimizer_grouped_parameters,lr=2e-5)
+lr_rate = 2e-5
+optimizer = AdamW(optimizer_grouped_parameters,lr=lr_rate)
 # optimizer = AdamW(model.parameters(),lr=2e-5)  # Default optimization
 epochs = 1000
-
+w_steps = 50
+cycle_step = 200
+if args.scheduler == 'cawr':
+  scheduler = CosineAnnealingWarmupRestarts(optimizer,
+                                            first_cycle_steps=cycle_step,
+                                            cycle_mult = 1,
+                                            max_lr = lr_rate,
+                                            min_lr = 2e-7,
+                                            warmup_steps = w_steps)
+elif args.scheduler =='rlop':
+  scheduler = ReduceLROnPlateau(optimizer, mode='min', min_lr = 2e-6, factor=0.1, patience=25)
+else:
+  scheduler = None
 
 trainer = ModelTrainer(model,
                        dataloaders,
                        num_labels,
                        epochs,
                        optimizer,
+                       scheduler,
                        device,
                        save_path,
                        label_cols)
@@ -110,7 +145,10 @@ print('Training_complete')
 print('Training time: ',finish-start)
 print(clf_report)
 
-pickle.dump(clf_report, open('test_classification_report.txt','wb'))
-pickle.dump(cm, open('test_confusion_matrix.txt','wb'))
+with open(os.path.join(save_path, 'test_classification_report.txt'), 'w') as file:
+  file.write(clf_report)
+
+# Save confusion matrix
+np.save(os.path.join(save_path, 'test_confusion_matrix.npy'), cm)
 
 

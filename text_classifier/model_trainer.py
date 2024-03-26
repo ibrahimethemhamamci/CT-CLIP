@@ -6,7 +6,6 @@ Created on Thu Dec  7 20:43:56 2023
 @author: furkan
 """
 import torch
-import torch.utils.data as data_utils
 import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
@@ -14,6 +13,8 @@ import transformers
 from sklearn.metrics import classification_report, confusion_matrix, multilabel_confusion_matrix, f1_score, accuracy_score
 from torch.nn import BCEWithLogitsLoss
 from scipy.special import expit
+from cosine_annealing_warmup import CosineAnnealingWarmupRestarts
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 import sys
 import time
@@ -30,6 +31,7 @@ class ModelTrainer:
                  num_class,
                  epochs,
                  optimizer,
+                 scheduler,
                  device,
                  save_path,
                  test_label_cols,
@@ -42,6 +44,7 @@ class ModelTrainer:
         self.num_class = num_class
         self.epochs = epochs
         self.optimizer = optimizer
+        self.scheduler = scheduler
         self.device = device
         self.save_path = save_path
         self.threshold = threshold
@@ -57,8 +60,16 @@ class ModelTrainer:
         no_improvement_for = 0
         
         for ep in range(self.epochs):
+            #print("Learning_rate: ", self.scheduler.get_last_lr())
             train_loss, train_acc, train_f1_macro, train_f1_micro = self.train(ep)
             test_loss,pred_labels,test_labels = self.test(ep)
+            if isinstance(self.scheduler, CosineAnnealingWarmupRestarts):
+                print("Learning_rate: ", self.scheduler.get_lr())
+                self.scheduler.step()
+
+            elif isinstance(self.scheduler, ReduceLROnPlateau):
+                print("Learning_rate: ", self.scheduler.optimizer.param_groups[0]['lr'])
+                self.scheduler.step(test_loss)
             no_improvement_for += 1
 
             if(test_loss<best_loss):
@@ -66,15 +77,15 @@ class ModelTrainer:
                 best_loss = test_loss
                 no_improvement_for = 0
                 print('Best Loss!!')
-                torch.save(self.model.state_dict(),os.path.join(self.save_path,"CTBertClassifier_best.pth"))
+                torch.save(self.model.state_dict(),os.path.join(self.save_path,"RadBertClassifier_best.pth"))
             
             if(ep%self.save_in == 0):
-                torch.save(self.model.state_dict(),os.path.join(self.save_path,f"CTBertClassifier_{ep}.pth"))
+                torch.save(self.model.state_dict(),os.path.join(self.save_path,f"RadBertClassifier_{ep}.pth"))
                 
             if no_improvement_for == self.early_stop:
                 break
         
-        torch.save(self.model.state_dict(),os.path.join(self.save_path,f"CTBertClassifier_last.pth"))
+        torch.save(self.model.state_dict(),os.path.join(self.save_path,f"RadBertClassifier_last.pth"))
         
         #Load the best model
         print("-------Loading the best model-------")
