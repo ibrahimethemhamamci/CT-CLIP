@@ -56,7 +56,7 @@ You can download the models from the following links:
 
 - **CT-LiPro Model**: [Download Here](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE/resolve/main/models/CT_LiPro.pt?download=true)
   
-- **Text Classifier Model**: [Download Here](##addlater##)
+- **Text Classifier Model**: [Download Here](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE/resolve/main/models/RadBertClassifier.pth?download=true)
 
 By leveraging these pretrained models, you can easily reproduce our results or further extend our work.
 
