@@ -92,26 +92,22 @@ def plot_tsne(embedding, labels, k):
     plt.clf()
 
 if __name__ == "__main__":
-    train_path_txt1 = "train_zeroshot_embeddings_before23k/accessions.txt"
-    train_path_txt2 = "train_zeroshot_embeddings_after23k/accessions.txt"
-    validation_path_txt = "valid_zeroshot_embeddings/accessions.txt"
-    train_csv_path = "/shares/menze.dqbm.uzh/ihamam/data_preprocessed_ctclip/train_labels_really_final_new.csv"
-    csv_path = "/shares/menze.dqbm.uzh/ihamam/data_unpreprocessed_npz/final_labels/valid_really_final_labels.csv"
+    train_path_txt = "path_to_train_accessions.txt"
+    validation_path_txt = "path_to_valid_accessions.txt"
+    train_csv_path = "path_to_train_labels.csv"
+    csv_path = "path_to_valid_labels.csv"
 
-    train_accessions1 = read_txt(train_path_txt1)
-    train_accessions2 = read_txt(train_path_txt2)
+    train_accessions = read_txt(train_path_txt)
     validation_accessions = read_txt(validation_path_txt)
 
     for i in tqdm.tqdm(range(18)):
-        train_labels_sum1 = map_accessions_to_labels(train_accessions1, train_csv_path, i)
-        train_labels_sum2 = map_accessions_to_labels(train_accessions2, train_csv_path, i)
+        train_labels_sum = map_accessions_to_labels(train_accessions, train_csv_path, i)
         validation_labels_sum = map_accessions_to_labels(validation_accessions, csv_path, i, isValid=True)
 
         combined_labels_sum = np.concatenate([train_labels_sum1,train_labels_sum2, validation_labels_sum])
 
-        train_path1 = "train_zeroshot_embeddings_before23k/image_latents.npz"
-        train_path2 = "train_zeroshot_embeddings_after23k/image_latents.npz"
-        validation_path = "valid_zeroshot_embeddings/image_latents.npz"
+        train_path1 = "path_to_train_image_latents.npz" ##could be done for text as well
+        validation_path = "path_to_valid_image_latents.npz" ##could be done for text as well
 
         if i == 0:
             all_latents = load_and_concatenate(train_path1,train_path2, validation_path)
