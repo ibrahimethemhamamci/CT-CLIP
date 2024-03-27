@@ -30,7 +30,7 @@ $ accelerate launch run_train.py
 To train CT-VocabFine, execute the provided script with the following command, ensuring correct paths:
 
 ```bash
-python ct_vocabfine_train.py \
+$ python ct_vocabfine_train.py \
     --lr 1e-5 \
     --wd 0.1 \
     --epochs 10 \
@@ -47,7 +47,7 @@ python ct_vocabfine_train.py \
 For training CT-LiPro, utilize the following script with accurate paths:
 
 ```bash
-python ct_lipro_train.py \
+$ python ct_lipro_train.py \
     --lr 1e-5 \
     --wd 0.1 \
     --epochs 10 \
@@ -77,7 +77,7 @@ $ python run_zero_shot.py
 For inference of CT-LiPro, utilize the following script with accurate paths:
 
 ```bash
-python ct_lipro_inference.py \
+$ python ct_lipro_inference.py \
     --lr 1e-5 \
     --wd 0.1 \
     --epochs 10 \
