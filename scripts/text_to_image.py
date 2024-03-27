@@ -15,7 +15,7 @@ def find_top_k_indices(values,k):
 
     return top_50_indices
 
-data_folder = "ctvocabfine_internal_embeddings_control_2/"
+data_folder = "path_to_latents_folder/"
 
 image_data= np.load(data_folder+"image_latents.npz")["data"][:,0,:]
 text_data = np.load(data_folder+"text_latents.npz")["data"][:,0,:]
