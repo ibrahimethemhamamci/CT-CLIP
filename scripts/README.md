@@ -99,3 +99,33 @@ $ python run_zero_shot.py
 
 This command initiates bootstrapping with 1000 samples and computes classification scores for each pathology across various bootstrap iterations. Subsequently, the results are saved into CSV files within the designated directory.
 
+
+## Volume-to-Volume and Report-to-Volume Retrieval
+
+To apply volume-to-volume and report-to-volume retrieval, first save the image and text embeddings of the model. This can be done by modifying the model execution in the `zero_shot.py` script as:
+
+```bash
+text_latents, image_latents = model(text_tokens, valid_data.cuda(),  device=device, return_latents=True)
+```
+
+The returned latents should be saved into single npz files as `image_latents.npz` and `text_latents.npz`. After that, adjust the paths in the `volume_to_volume.py` and `report_to_volume.py` scripts accordingly. Then they can be executed as:
+
+```bash
+$ python volume_to_volume.py
+```
+
+and
+
+```bash
+$ python report_to_volume.py
+```
+
+## T-SNE Plots:
+
+To generate T-SNE plots, first, compute the latent representations for both training and validation data as previously described. Then, update the file paths in `tsne_latents.py` accordingly and execute the script using the following command:
+
+```bash
+$ python tsne_latents.py
+```
+
+

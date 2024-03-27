@@ -53,7 +53,7 @@ def evaluate_model(args, model, dataloader, device):
     with torch.no_grad():
 
         for batch in tqdm.tqdm(dataloader):
-            inputs, acc_no, labels = batch
+            inputs, _, labels, acc_no = batch
             labels = labels.float().to(device)
             inputs = inputs.to(device)
             # Assuming your model takes in the same inputs as during training
@@ -62,7 +62,8 @@ def evaluate_model(args, model, dataloader, device):
             realall.append(labels.detach().cpu().numpy()[0])
             save_out = sigmoid(torch.tensor(output)).cpu().numpy()
             predictedall.append(save_out[0])
-            accs.append(acc_no)
+            accs.append(acc_no[0])
+            print(acc_no[0], flush=True)
 
         plotdir = args.save
         os.makedirs(plotdir, exist_ok=True)

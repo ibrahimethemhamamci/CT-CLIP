@@ -38,7 +38,7 @@ class CTReportDataset(Dataset):
         df = pd.read_csv(csv_file)
         accession_to_text = {}
         for index, row in df.iterrows():
-            accession_to_text[row['AccessionNo']] = row["Findings_EN"],row['Impressions_EN']
+            accession_to_text[row['VolumeName']] = row["Findings_EN"],row['Impressions_EN']
 
         return accession_to_text
 

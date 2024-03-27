@@ -22,14 +22,23 @@ $ python train.py --dataset 'path_to/dataset_folder' --augment 0 --scheduler 'No
 Adjust the file paths within the bash command to point to `test_all.csv` (which contains all accessions and reports) and `text_transformer_model.pth` for your downloaded dataset and model. Subsequently, execute the following command:
 
 ```bash
-$ python infer.py --checkpoint 'path_to/text_transformer_model.pth' --single_data 'path_to/single_csv_file'
+$ python infer.py --checkpoint 'path_to/text_transformer_model.pth' --single_data 'path_to/single_csv_file' --save_path 'path_to_save_dir'
 ```
 or 
 ```bash
-$ python infer.py --checkpoint 'path_to/text_transformer_model.pth' --dataset 'path_to/dataset_folder'
+$ python infer.py --checkpoint 'path_to/text_transformer_model.pth' --dataset 'path_to/dataset_folder' --save_path 'path_to_save_dir'
 ```
 ```bash
 # checkpoint: pretrained model weights
 # dataset: specify dataset_folder
 # single_data: specify single csv file
 ```
+
+## Evaluation
+
+To evaluate the model, please run the inference in the validation data. After doing that, adjust the ground truth and inferred outputs in the `eval.py` script and run it as:
+
+```bash
+$ python eval.py
+```
+

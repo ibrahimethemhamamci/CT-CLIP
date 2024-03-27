@@ -43,6 +43,11 @@ def finetune(args):
     num_classes = 18  # Specify the number of classes
     print('Fine-tuning end-to-end')
     model = clip
+    for name, param in model.named_parameters():
+        if "latent" in name:
+            print(name, param.shape)
+        else:
+            param.requires_grad = False
 
 
     ds = CTReportDatasetinfer(data_folder=args.data_folder, csv_file=args.reports_file,labels=args.labels)
@@ -69,12 +74,12 @@ def finetune(args):
             step = i + epoch * num_batches
             scheduler(step)
 
-            inputs, _, labels = batch
+            inputs, _, labels, _ = batch
 
             logits = []
             labels_tensor_all = labels.float().to(torch.device('cuda'))
 
-            for i in range(3):
+            for k in range(3):
                 logits_list = []
                 labels_list = []
 
@@ -83,18 +88,18 @@ def finetune(args):
                                    'Atelectasis', 'Lung nodule', 'Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion',
                                    'Mosaic attenuation pattern', 'Peribronchial thickening', 'Consolidation', 'Bronchiectasis',
                                    'Interlobular septal thickening']
-                pathologies = pathologies_all[i * 6:(i + 1) * 6]
-                labels_tensor = labels_tensor_all[0][i * 6:(i + 1) * 6]
+                pathologies = pathologies_all[k * 6:(k + 1) * 6]
+                labels_tensor = labels_tensor_all[0][k * 6:(k + 1) * 6]
 
-                for i in range(len(labels_tensor)):
+                for l in range(len(labels_tensor)):
                     text_yes = ""
                     text_no = ""
-                    if labels_tensor[i] == 1:
-                        text_yes = text_yes + f"{pathologies[i]}. "
-                        text_no = text_no + f"no {pathologies[i]}. "
-                    if labels_tensor[i] == 0:
-                        text_yes = text_yes + f"no {pathologies[i]}. "
-                        text_no = text_no + f"{pathologies[i]}. "
+                    if labels_tensor[l] == 1:
+                        text_yes = text_yes + f"{pathologies[l]}. "
+                        text_no = text_no + f"not {pathologies[l]}. "
+                    if labels_tensor[l] == 0:
+                        text_yes = text_yes + f"not {pathologies[l]}. "
+                        text_no = text_no + f"{pathologies[l]}. "
                     text = [text_yes, text_no]
                     text_tokens = tokenizer(
                         text, return_tensors="pt", padding="max_length", truncation=True, max_length=512).to(
@@ -126,19 +131,37 @@ def finetune(args):
                 )
             if i % args.save_every == 0:
                 os.makedirs(args.save, exist_ok=True)
-                model_path = os.path.join(args.save, f'checkpoint_{i}_epoch_{epoch + 1}.pt')
+
+                # Access the underlying model to avoid the 'module.' prefix in state_dict keys
+                model_to_save = model.module if hasattr(model, 'module') else model
+
+                model_path = os.path.join(args.save, f'checkpoint_{i}_epoch_{epoch+1}.pt')
                 print('Saving model to', model_path)
-                torch.save(model, model_path)
-                optim_path = os.path.join(args.save, f'optim_{i}_epoch_{epoch + 1}.pt')
+
+                # Save the state_dict of the unwrapped model
+                torch.save(model_to_save.state_dict(), model_path)
+
+                optim_path = os.path.join(args.save, f'optim_{i}_epoch_{epoch+1}.pt')
+
+                # Save the optimizer state
                 torch.save(optimizer.state_dict(), optim_path)
 
         # Saving model
         if args.save is not None:
             os.makedirs(args.save, exist_ok=True)
-            model_path = os.path.join(args.save, f'checkpoint_{epoch + 1}.pt')
+
+            # Access the underlying model to avoid the 'module.' prefix in state_dict keys
+            model_to_save = model.module if hasattr(model, 'module') else model
+
+            model_path = os.path.join(args.save, f'epoch_{epoch+1}.pt')
             print('Saving model to', model_path)
-            torch.save(clip.state_dict(), model_path)
-            optim_path = os.path.join(args.save, f'optim_{epoch + 1}.pt')
+
+            # Save the state_dict of the unwrapped model
+            torch.save(model_to_save.state_dict(), model_path)
+
+            optim_path = os.path.join(args.save, f'epoch_{epoch+1}.pt')
+
+            # Save the optimizer state
             torch.save(optimizer.state_dict(), optim_path)
 
     if args.save is not None:
