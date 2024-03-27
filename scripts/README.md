@@ -108,16 +108,16 @@ To apply volume-to-volume and report-to-volume retrieval, first save the image a
 text_latents, image_latents = model(text_tokens, valid_data.cuda(),  device=device, return_latents=True)
 ```
 
-The returned latents should be saved into single npz files as `image_latents.npz` and `text_latents.npz`. After that, adjust the paths in the `image_to_image.py` and `text_to_image.py` scripts accordingly. Then they can be executed as:
+The returned latents should be saved into single npz files as `image_latents.npz` and `text_latents.npz`. After that, adjust the paths in the `volume_to_volume.py` and `report_to_volume.py` scripts accordingly. Then they can be executed as:
 
 ```bash
-$ python image_to_image.py
+$ python volume_to_volume.py
 ```
 
 and
 
 ```bash
-$ python text_to_image.py
+$ python report_to_volume.py
 ```
 
 ## T-SNE Plots:
