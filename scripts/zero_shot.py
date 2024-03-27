@@ -266,8 +266,7 @@ class CTClipInference(nn.Module):
                     accession_names=[]
                     pathologies = ['Medical material','Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion','Coronary artery wall calcification', 'Hiatal hernia','Lymphadenopathy', 'Emphysema', 'Atelectasis', 'Lung nodule','Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion', 'Mosaic attenuation pattern','Peribronchial thickening', 'Consolidation', 'Bronchiectasis','Interlobular septal thickening']
                     for i in tqdm.tqdm(range(len(self.ds))):
-                        valid_data, text, onehotlabels = next(self.dl_iter)
-                        print(onehotlabels)
+                        valid_data, text, onehotlabels, acc_name = next(self.dl_iter)
 
                         plotdir = self.result_folder_txt
                         Path(plotdir).mkdir(parents=True, exist_ok=True)
@@ -287,15 +286,12 @@ class CTClipInference(nn.Module):
                             append_out=output.detach().cpu().numpy()
                             predictedlabels.append(append_out[0])
 
-                        print(predictedlabels)
-                        print(onehotlabels)
                         predictedall.append(predictedlabels)
                         realall.append(onehotlabels.detach().cpu().numpy()[0])
-
+                        accession_names.append(acc_name[0])
 
                     realall=np.array(realall)
                     predictedall=np.array(predictedall)
-                    print(realall)
 
                     np.savez(f"{plotdir}labels_weights.npz", data=realall)
                     np.savez(f"{plotdir}predicted_weights.npz", data=predictedall)

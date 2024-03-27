@@ -22,5 +22,6 @@ setup(
     "click",
     "appdirs",
     "attr",
+    "nltk"
       ],
 )

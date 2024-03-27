@@ -9,6 +9,8 @@ from transformer_maskgit import CTViT
 from transformers import BertTokenizer, BertModel
 from ct_clip import CTCLIP
 
+import tqdm
+
 from src.args import parse_arguments
 from src.models.utils import cosine_lr
 
@@ -16,24 +18,22 @@ class ImageLatentsClassifier(nn.Module):
     def __init__(self, trained_model, latent_dim, num_classes, dropout_prob=0.3):
         super(ImageLatentsClassifier, self).__init__()
         self.trained_model = trained_model
-        self.dropout = nn.Dropout(dropout_prob)
+        for param in self.trained_model.parameters():
+            param.requires_grad = False
+        self.dropout = nn.Dropout(dropout_prob)  # Add dropout layer
         self.relu = nn.ReLU()
-        self.classifier = nn.Linear(latent_dim, num_classes)
+        self.classifier = nn.Linear(latent_dim, num_classes)  # Assuming trained_model.image_latents_dim gives the size of the image_latents
 
     def forward(self, *args, **kwargs):
-        # Forward pass through the model
         kwargs['return_latents'] = True
         _, image_latents = self.trained_model(*args, **kwargs)
         image_latents = self.relu(image_latents)
-        image_latents = self.dropout(image_latents)
+        image_latents = self.dropout(image_latents)  # Apply dropout on the latents
         return self.classifier(image_latents)
 
     def save(self, file_path):
-        # Save model's state dictionary to file
         torch.save(self.state_dict(), file_path)
-
     def load(self, file_path):
-        # Load model's state dictionary from file
         loaded_state_dict = torch.load(file_path)
         self.load_state_dict(loaded_state_dict)
 
@@ -67,6 +67,8 @@ def finetune(args):
     dl = DataLoader(ds, num_workers=8, batch_size=8, shuffle=True)
     num_batches = len(dl)
 
+    os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
     # Move model to GPU and set it to training mode
     model = image_classifier.cuda()
     devices = list(range(torch.cuda.device_count()))
@@ -80,54 +82,69 @@ def finetune(args):
                             6.335045662, 10.81701149, 13.40695067]).cuda()
     loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=weights)
 
-    params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.AdamW(params, lr=args.lr, weight_decay=args.wd)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
     scheduler = cosine_lr(optimizer, args.lr, args.warmup_length, args.epochs * num_batches)
 
     # Start training loop
     for epoch in range(args.epochs):
-        model.train()
-        for i, batch in enumerate(dl):
+        for i, batch in tqdm.tqdm(enumerate(dl)):
             start_time = time.time()
             step = i + epoch * num_batches
-            scheduler(step)
-            optimizer.zero_grad()
 
-            inputs, _, labels = batch
+            inputs, _, labels, _ = batch
             labels = labels.float().cuda()
-
-            text_tokens = tokenizer("", return_tensors="pt", padding="max_length", truncation=True, max_length=200).to("cuda")
+            text_tokens = tokenizer([" "], return_tensors="pt", padding="max_length", truncation=True, max_length=512).to("cuda")
 
             data_time = time.time() - start_time
             logits = model(text_tokens, inputs, device=torch.device('cuda'))
             loss = loss_fn(logits, labels)
-            loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(params, 1.0)
+            optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
+            scheduler(step)
             batch_time = time.time() - start_time
 
             if i % args.print_every == 0:
                 percent_complete = 100 * i / len(dl)
                 print(f"Train Epoch: {epoch} [{percent_complete:.0f}% {i}/{len(dl)}]\t"
                       f"Loss: {loss.item():.6f}\tData (t) {data_time:.3f}\tBatch (t) {batch_time:.3f}", flush=True)
+
             if i % args.save_every == 0:
                 os.makedirs(args.save, exist_ok=True)
+
+                # Access the underlying model to avoid the 'module.' prefix in state_dict keys
+                model_to_save = model.module if hasattr(model, 'module') else model
+
                 model_path = os.path.join(args.save, f'checkpoint_{i}_epoch_{epoch+1}.pt')
                 print('Saving model to', model_path)
-                image_classifier.save(model_path)
+
+                # Save the state_dict of the unwrapped model
+                torch.save(model_to_save.state_dict(), model_path)
+
                 optim_path = os.path.join(args.save, f'optim_{i}_epoch_{epoch+1}.pt')
+
+                # Save the optimizer state
                 torch.save(optimizer.state_dict(), optim_path)
 
-    # Save final model
-    if args.save is not None:
-        os.makedirs(args.save, exist_ok=True)
-        model_path = os.path.join(args.save, f'checkpoint_{epoch+1}.pt')
-        print('Saving model to', model_path)
-        image_classifier.save(model_path)
-        optim_path = os.path.join(args.save, f'optim_{epoch+1}.pt')
-        torch.save(optimizer.state_dict(), optim_path)
+        # Save final model
+        if args.save is not None:
+            os.makedirs(args.save, exist_ok=True)
 
+            # Access the underlying model to avoid the 'module.' prefix in state_dict keys
+            model_to_save = model.module if hasattr(model, 'module') else model
+
+            model_path = os.path.join(args.save, f'epoch_{epoch+1}.pt')
+            print('Saving model to', model_path)
+
+            # Save the state_dict of the unwrapped model
+            torch.save(model_to_save.state_dict(), model_path)
+
+            optim_path = os.path.join(args.save, f'epoch_{epoch+1}.pt')
+
+            # Save the optimizer state
+            torch.save(optimizer.state_dict(), optim_path)
 if __name__ == '__main__':
     # Parse command-line arguments
     args = parse_arguments()

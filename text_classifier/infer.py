@@ -36,8 +36,13 @@ parser.add_argument(
     '--single_data',
     help='single data file inference',
     required=False,
-    default=None)  
+    default=None)
 
+parser.add_argument(
+    '--save_path',
+    help='single data file inference',
+    required=False,
+    default="./output/")
 args = parser.parse_args()
 
 def get_unique_folder(base_folder):
@@ -50,21 +55,13 @@ def get_unique_folder(base_folder):
     
     return new_folder
 
-
 if not args.dataset and not args.single_data:
   raise ValueError("Either --dataset or --single_data argument is required")
 
 if args.dataset and args.single_data:
   raise ValueError("Both --dataset and --single_data arguments cannot be used simultaneously")
 
-
-if args.dataset:
-  save_path = 'Results_infer_'+args.dataset
-else:
-  save_path = 'Results_infer_'+args.single_data
-
-
-save_path = get_unique_folder(save_path)
+save_path = args.save_path
 os.mkdir(save_path)
 
 print('Results will be saved to ',save_path)
