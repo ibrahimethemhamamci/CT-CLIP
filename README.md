@@ -71,7 +71,12 @@ A major challenge in computational research in 3D medical imaging is the lack of
 
 You can download the dataset used in this work via the [HuggingFace repository](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE). 
 
-Data used to train and validate text classifier model can be accessed [here](text_classifier/data).
+Data used to finetune and validate the text classifier model can be accessed [here](text_classifier/data).
+
+
+## Citing Us
+If you use CT-RATE or CT-CLIP, we would appreciate your references to our paper.
+
 
 ## License
 We are committed to fostering innovation and collaboration in the research community. To this end, all elements of CT-CLIP are released under a [Creative Commons Attribution (CC-BY-NC-SA) license](https://creativecommons.org/licenses/by-nc-sa/4.0/). This licensing framework ensures that our contributions can be freely used for non-commercial research purposes, while also encouraging contributions and modifications, provided that the original work is properly cited and any derivative works are shared under similar terms.
