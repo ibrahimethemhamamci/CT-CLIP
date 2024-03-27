@@ -104,7 +104,7 @@ if __name__ == "__main__":
         train_labels_sum = map_accessions_to_labels(train_accessions, train_csv_path, i)
         validation_labels_sum = map_accessions_to_labels(validation_accessions, csv_path, i, isValid=True)
 
-        combined_labels_sum = np.concatenate([train_labels_sum1,train_labels_sum2, validation_labels_sum])
+        combined_labels_sum = np.concatenate([train_labels_sum, validation_labels_sum])
 
         train_path1 = "path_to_train_image_latents.npz" ##could be done for text as well
         validation_path = "path_to_valid_image_latents.npz" ##could be done for text as well
