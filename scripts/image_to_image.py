@@ -32,7 +32,7 @@ def calc_similarity(arr1,arr2):
 
     return ( (oneandone) / (oneandone + oneorzero))
 
-data_folder = "zeroshot_external_valid_embeddings/"
+data_folder = "path_to_latents_folder/"
 
 file_path = data_folder + 'accessions.txt'
 
@@ -49,7 +49,7 @@ with open(file_path, 'r') as file:
         accs.append(cleaned_line)
 
 # Now, file_contents contains the contents of the file as a list
-df = pd.read_csv("/home/ihamam/data/30_09_2023_CTClip/CTClip/inferred_external_valid.csv")
+df = pd.read_csv("path_to_validation_labels.csv")
 
 
 image_data= np.load(data_folder + "image_latents.npz")["data"][:,0,:]
