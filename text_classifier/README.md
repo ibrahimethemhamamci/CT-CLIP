@@ -36,7 +36,7 @@ $ python infer.py --checkpoint 'path_to/text_transformer_model.pth' --dataset 'p
 
 ## Evaluation
 
-To evaluate the model, please run the inference in the validation data. After doing that, adjust the ground truth and inferred outputs in the eval.py script and run it as:
+To evaluate the model, please run the inference in the validation data. After doing that, adjust the ground truth and inferred outputs in the `eval.py` script and run it as:
 
 ```bash
 $ python eval.py
