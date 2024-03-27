@@ -75,7 +75,7 @@ Data used to finetune and validate the text classifier model can be accessed [he
 
 
 ## Citing Us
-If you use CT-RATE or CT-CLIP, we would appreciate your references to our paper.
+If you use CT-RATE or CT-CLIP, we would appreciate your references to [our paper](https://arxiv.org/abs/2403.17834).
 
 
 ## License
