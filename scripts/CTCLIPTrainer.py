@@ -5,7 +5,7 @@ from datetime import timedelta
 from transformer_maskgit.optimizer import get_optimizer
 from transformers import BertTokenizer, BertModel
 
-from eval import evaluate, plot_roc, accuracy, sigmoid, bootstrap, compute_cis
+from eval import evaluate_internal, plot_roc, accuracy, sigmoid, bootstrap, compute_cis
 from sklearn.metrics import classification_report, confusion_matrix, multilabel_confusion_matrix, f1_score, accuracy_score
 
 
@@ -345,7 +345,7 @@ class CTClipTrainer(nn.Module):
                     realall=np.array(realall)
                     predictedall=np.array(predictedall)
 
-                    dfs=evaluate(predictedall,realall,pathologies, plotdir)
+                    dfs=evaluate_internal(predictedall,realall,pathologies, plotdir)
                     realall = np.rint(realall).astype(int)
                     predictedall = np.rint(predictedall).astype(int)
 
