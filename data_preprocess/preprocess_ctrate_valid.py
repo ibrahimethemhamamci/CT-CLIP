@@ -112,6 +112,7 @@ def process_file(file_path):
     save_folder = "valid_preprocessed/" #save folder for preprocessed
     folder_path_new = os.path.join(save_folder, "valid_" + file_name.split("_")[1], "valid_" + file_name.split("_")[1] + file_name.split("_")[2]) #folder name for train or validation
     os.makedirs(folder_path_new, exist_ok=True)
+    file_name = file_name.split(".")[0]+".npz"
     save_path = os.path.join(folder_path_new, file_name)
     np.savez(save_path, resized_array)
 
