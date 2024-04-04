@@ -310,7 +310,7 @@ class CTClipTrainer(nn.Module):
                     #Fast inference on 100 images
                     for i in range(100):
                         print("test")
-                        valid_data, text, onehotlabels = next(self.valid_dl_iter)
+                        valid_data, text, onehotlabels, name_acc = next(self.valid_dl_iter)
                         valid_data = valid_data.to(device)
 
                         if "module" in model.__dict__:
