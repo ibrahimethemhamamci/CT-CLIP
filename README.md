@@ -69,7 +69,7 @@ A major challenge in computational research in 3D medical imaging is the lack of
   <img src="figures/CT-RATE.png" width="100%">
 </p>
 
-You can download the dataset used in this work via the [HuggingFace repository](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE). 
+You can download the dataset used in this work via the [Hugging Face repository](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE). 
 
 Data used to finetune and validate the text classifier model can be accessed [here](text_classifier/data).
 
