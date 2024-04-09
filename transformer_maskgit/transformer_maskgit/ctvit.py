@@ -103,116 +103,6 @@ def grad_layer_wrt_loss(loss, layer):
         retain_graph = True
     )[0].detach()
 
-# discriminator
-
-class DiscriminatorBlock(nn.Module):
-    def __init__(
-        self,
-        input_channels,
-        filters,
-        downsample = True
-    ):
-        super().__init__()
-        self.conv_res = nn.Conv2d(input_channels, filters, 1, stride = (2 if downsample else 1))
-
-        self.net = nn.Sequential(
-            nn.Conv2d(input_channels, filters, 3, padding=1),
-            leaky_relu(),
-            nn.Conv2d(filters, filters, 3, padding=1),
-            leaky_relu()
-        )
-
-        self.downsample = nn.Sequential(
-            Rearrange('b c (h p1) (w p2) -> b (c p1 p2) h w', p1 = 2, p2 = 2),
-            nn.Conv2d(filters * 4, filters, 1)
-        ) if downsample else None
-
-    def forward(self, x):
-        res = self.conv_res(x)
-        x = self.net(x)
-
-        if exists(self.downsample):
-            x = self.downsample(x)
-
-        x = (x + res) * (1 / math.sqrt(2))
-        return x
-
-
-class Discriminator(nn.Module):
-    def __init__(
-        self,
-        *,
-        dim,
-        image_size,
-        channels = 3,
-        attn_res_layers = (16,),
-        max_dim = 512
-    ):
-        super().__init__()
-        image_size = pair(image_size)
-        min_image_resolution = min(image_size)
-
-        num_layers = int(math.log2(min_image_resolution) - 2)
-        attn_res_layers = cast_tuple(attn_res_layers, num_layers)
-
-        blocks = []
-
-        layer_dims = [channels] + [(dim * 4) * (2 ** i) for i in range(num_layers + 1)]
-        layer_dims = [min(layer_dim, max_dim) for layer_dim in layer_dims]
-        layer_dims_in_out = tuple(zip(layer_dims[:-1], layer_dims[1:]))
-
-        blocks = []
-        attn_blocks = []
-
-        image_resolution = min_image_resolution
-
-        for ind, (in_chan, out_chan) in enumerate(layer_dims_in_out):
-            num_layer = ind + 1
-            is_not_last = ind != (len(layer_dims_in_out) - 1)
-
-            block = DiscriminatorBlock(in_chan, out_chan, downsample = is_not_last)
-            blocks.append(block)
-
-            attn_block = None
-            if image_resolution in attn_res_layers:
-                attn_block = Attention(dim = out_chan)
-
-            attn_blocks.append(attn_block)
-
-            image_resolution //= 2
-
-        self.blocks = nn.ModuleList(blocks)
-        self.attn_blocks = nn.ModuleList(attn_blocks)
-
-        dim_last = layer_dims[-1]
-
-        downsample_factor = 2 ** num_layers
-        last_fmap_size = tuple(map(lambda n: n // downsample_factor, image_size))
-
-        latent_dim = last_fmap_size[0] * last_fmap_size[1] * dim_last
-
-        self.to_logits = nn.Sequential(
-            nn.Conv2d(dim_last, dim_last, 3, padding = 1),
-            leaky_relu(),
-            Rearrange('b ... -> b (...)'),
-            nn.Linear(latent_dim, 1),
-            Rearrange('b 1 -> b')
-        )
-
-    def forward(self, x):
-
-        for block, attn_block in zip(self.blocks, self.attn_blocks):
-            x = block(x)
-
-            if exists(attn_block):
-                x, ps = pack([x], 'b c *')
-                x = rearrange(x, 'b c n -> b n c')
-                x = attn_block(x) + x
-                x = rearrange(x, 'b n c -> b c n')
-                x, = unpack(x, ps, 'b c *')
-
-        return self.to_logits(x)
-
 # ctvit - 3d ViT with factorized spatial and temporal attention made into an vqgan-vae autoencoder
 
 def pick_video_frame(video, frame_indices):
@@ -297,8 +187,6 @@ class CTViT(nn.Module):
         self.enc_temporal_transformer = Transformer(depth = temporal_depth, **transformer_kwargs)
         self.vq = VectorQuantize(dim = dim, codebook_size = codebook_size, use_cosine_sim = True)
 
-        self.dec_spatial_transformer = Transformer(depth = spatial_depth, **transformer_kwargs)
-        self.dec_temporal_transformer = Transformer(depth = temporal_depth, **transformer_kwargs)
         self.to_pixels_first_frame = nn.Sequential(
             nn.Linear(dim, channels * patch_width * patch_height),
             Rearrange('b 1 h w (c p1 p2) -> b c 1 (h p1) (w p2)', p1 = patch_height, p2 = patch_width)
@@ -309,33 +197,6 @@ class CTViT(nn.Module):
             Rearrange('b t h w (c pt p1 p2) -> b c (t pt) (h p1) (w p2)', p1 = patch_height, p2 = patch_width, pt = temporal_patch_size),
         )
         
-        # turn off GAN and perceptual loss if grayscale
-
-        self.vgg = None
-        self.discr = None
-        self.use_vgg_and_gan = use_vgg_and_gan
-
-        if not use_vgg_and_gan:
-            return
-
-        # preceptual loss
-
-        if exists(vgg):
-            self.vgg = vgg
-        else:
-            self.vgg = torchvision.models.vgg16(pretrained = True)
-            self.vgg.classifier = nn.Sequential(*self.vgg.classifier[:-2])
-
-        # gan related losses
-
-        self.discr = Discriminator(
-            image_size = 256,
-            dim = discr_base_dim,
-            channels = channels,
-            attn_res_layers = discr_attn_res_layers
-        )
-
-        self.discr_loss = hinge_discr_loss if use_hinge_loss else bce_discr_loss
         self.gen_loss = hinge_gen_loss if use_hinge_loss else bce_gen_loss
 
     def calculate_video_token_mask(self, videos, video_frame_mask):
