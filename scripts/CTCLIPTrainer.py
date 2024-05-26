@@ -362,15 +362,12 @@ class CTClipTrainer(nn.Module):
 
         # save model every so often
 
-        if self.is_main and not (steps % self.save_model_every):
-            model_save = self.accelerator.unwrap_model(self.CTClip)
-            state_dict = model_save.state_dict()
-            model_path = str(self.results_folder / f'CTClip.{steps}.pt')
-
-            self.accelerator.save(state_dict, model_path)
-
-
-            self.print(f'{steps}: saving model to {str(self.results_folder)}')
+        if not (steps % self.save_model_every):
+            state_dict = self.accelerator.get_state_dict(self.CTClip, unwrap=False)
+            if self.is_main:
+                model_path = str(self.results_folder / f'CTClip.{steps}.pt')
+                self.accelerator.save(state_dict, model_path)
+                self.print(f'{steps}: saving model to {str(self.results_folder)}')
 
         self.steps += 1
         return logs
