@@ -20,6 +20,7 @@ from torch.utils.data import DataLoader
 from transformers import BertTokenizer
 
 from ct_clip import CTCLIP, get_optimizer
+from ct_clip.helpers import cycle, exists, noop
 from data import CTReportDataset
 from data_inference import CTReportDatasetinfer
 from eval import evaluate_internal
@@ -62,20 +63,6 @@ def tensor_to_nifti(tensor, path, affine=np.eye(4)):
     numpy_data = tensor.detach().numpy().astype(np.float32)
     nifti_img = nib.Nifti1Image(numpy_data, affine)
     nib.save(nifti_img, path)
-
-
-def exists(val):
-    return val is not None
-
-
-def noop(*args, **kwargs):
-    pass
-
-
-def cycle(dl):
-    while True:
-        for data in dl:
-            yield data
 
 
 def yes_or_no(question):

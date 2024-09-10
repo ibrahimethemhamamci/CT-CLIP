@@ -12,30 +12,13 @@ from torch import nn
 from torch.utils.data import DataLoader, random_split
 from torchvision.utils import make_grid, save_image
 
+from ct_clip.helpers import cycle, exists, noop
 from ctvit import CTViT
 from data import ImageDataset, VideoDataset, tensor_to_nifti
 from optimizer import get_optimizer
 
 
 # helpers
-
-
-def exists(val):
-    return val is not None
-
-
-def noop(*args, **kwargs):
-    pass
-
-
-def cycle(dl):
-    while True:
-        for data in dl:
-            yield data
-
-
-def cast_tuple(t):
-    return t if isinstance(t, (tuple, list)) else (t,)
 
 
 def yes_or_no(question):

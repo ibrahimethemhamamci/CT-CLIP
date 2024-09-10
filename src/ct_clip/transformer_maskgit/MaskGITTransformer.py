@@ -14,6 +14,7 @@ from einops.layers.torch import Rearrange
 from torch import nn
 
 from attention import Transformer, ContinuousPositionBias
+from ct_clip.helpers import cast_tuple, default, exists, log
 from ct_clip.types import Device
 from ctvit import CTViT
 from t5 import t5_encode_text, get_encoded_dim, DEFAULT_T5_NAME
@@ -22,24 +23,8 @@ from t5 import t5_encode_text, get_encoded_dim, DEFAULT_T5_NAME
 # helpers
 
 
-def exists(val):
-    return val is not None
-
-
-def default(val, d):
-    return val if exists(val) else d
-
-
-def cast_tuple(val, length=1):
-    return val if isinstance(val, tuple) else (val,) * length
-
-
 def reduce_mult(arr):
     return functools.reduce(lambda x, y: x * y, arr)
-
-
-def divisible_by(numer, denom):
-    return (numer % denom) == 0
 
 
 def copy_for_eval(ctvit, device: Device = None):
@@ -103,13 +88,6 @@ def prob_mask_like(shape, prob, device):
         return torch.zeros(shape, device=device).float().uniform_(0, 1) < prob
 
 
-# tensor helper functions
-
-
-def log(t, eps=1e-10):
-    return torch.log(t + eps)
-
-
 # sampling helpers
 
 
@@ -120,15 +98,6 @@ def gumbel_noise(t):
 
 def gumbel_sample(t, temperature=1.0, dim=-1):
     return ((t / max(temperature, 1e-10)) + gumbel_noise(t)).argmax(dim=dim)
-
-
-def top_k(logits, thres=0.5):
-    num_logits = logits.shape[-1]
-    k = max(int((1 - thres) * num_logits), 1)
-    val, ind = torch.topk(logits, k)
-    probs = torch.full_like(logits, float("-inf"))
-    probs.scatter_(1, ind, val)
-    return probs
 
 
 # mask git

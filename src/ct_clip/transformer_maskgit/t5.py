@@ -2,15 +2,11 @@ import torch
 import transformers
 from transformers import T5Tokenizer, T5EncoderModel, T5Config
 
+from ct_clip.helpers import exists
+
 # less warning messages since only using encoder
 
 transformers.logging.set_verbosity_error()
-
-# helper functions
-
-
-def exists(val):
-    return val is not None
 
 
 # config

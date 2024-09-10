@@ -10,26 +10,13 @@ from torch import nn
 from torch.utils.data import DataLoader, random_split
 
 from MaskGITTransformer import MaskGITTransformer
+from ct_clip.helpers import cycle, exists, noop
 from data import tensor_to_nifti
 from optimizer import get_optimizer
 from videotextdataset import VideoTextDataset
 
 
 # helpers
-
-
-def exists(val):
-    return val is not None
-
-
-def noop(*args, **kwargs):
-    pass
-
-
-def cycle(dl):
-    while True:
-        for data in dl:
-            yield data
 
 
 def yes_or_no(question):

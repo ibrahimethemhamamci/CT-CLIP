@@ -10,24 +10,10 @@ from einops.layers.torch import Rearrange, Reduce
 from torch import nn, einsum
 from torch.utils.checkpoint import checkpoint
 
+from ct_clip.helpers import cast_tuple, exists, identity, l2norm, log
 from ct_clip.types import Device
 from mlm import MLM
 from visual_ssl import SimSiam, SimCLR
-
-
-# helper functions
-
-
-def identity(t, *args, **kwargs):
-    return t
-
-
-def exists(val):
-    return val is not None
-
-
-def default(val, d):
-    return val if exists(val) else d
 
 
 @contextmanager
@@ -39,23 +25,11 @@ def max_neg_value(dtype):
     return -torch.finfo(dtype).max
 
 
-def cast_tuple(t):
-    return t if isinstance(t, (tuple, list)) else (t,)
-
-
 def masked_mean(t, mask, dim=1, eps=1e-6):
     t = t.masked_fill(~mask, 0.0)
     numer = t.sum(dim=dim)
     denom = mask.sum(dim=dim).clamp(min=eps)
     return numer / denom
-
-
-def log(t, eps=1e-20):
-    return torch.log(t + eps)
-
-
-def l2norm(t):
-    return F.normalize(t, dim=-1)
 
 
 def matrix_diag(t):

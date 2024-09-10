@@ -14,20 +14,10 @@ from einops import rearrange
 from torch.utils.data import Dataset, DataLoader as PytorchDataLoader
 from torchvision import transforms as T
 
+from ct_clip.helpers import exists, identity, pair
+
 
 # helper functions
-
-
-def exists(val):
-    return val is not None
-
-
-def identity(t, *args, **kwargs):
-    return t
-
-
-def pair(val):
-    return val if isinstance(val, tuple) else (val, val)
 
 
 def cast_num_frames(t, *, frames):

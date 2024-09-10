@@ -7,26 +7,15 @@ from beartype import beartype
 from einops import rearrange, repeat
 from torch import nn, einsum, Tensor
 
+from ct_clip.helpers import exists, default, l2norm
 from ct_clip.types import Device
 
 
 # helpers
 
 
-def exists(val):
-    return val is not None
-
-
-def default(val, d):
-    return val if exists(val) else d
-
-
 def leaky_relu(p=0.1):
     return nn.LeakyReLU(p)
-
-
-def l2norm(t):
-    return F.normalize(t, dim=-1)
 
 
 MPS = torch.device("mps")

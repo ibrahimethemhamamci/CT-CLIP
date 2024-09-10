@@ -1,5 +1,3 @@
-import copy
-from functools import wraps
 from pathlib import Path
 
 import torch
@@ -12,54 +10,11 @@ from torchvision import transforms as T
 from vector_quantize_pytorch import VectorQuantize
 
 from attention import Transformer, ContinuousPositionBias
+from ct_clip.helpers import exists, log, pair
 from ct_clip.types import Device
 
 
 # helpers
-
-
-def exists(val):
-    return val is not None
-
-
-def default(val, d):
-    return val if exists(val) else d
-
-
-def divisible_by(numer, denom):
-    return (numer % denom) == 0
-
-
-def leaky_relu(p=0.1):
-    return nn.LeakyReLU(p)
-
-
-def remove_vgg(fn):
-    @wraps(fn)
-    def inner(self, *args, **kwargs):
-        has_vgg = hasattr(self, "vgg")
-        if has_vgg:
-            vgg = self.vgg
-            delattr(self, "vgg")
-
-        out = fn(self, *args, **kwargs)
-
-        if has_vgg:
-            self.vgg = vgg
-
-        return out
-
-    return inner
-
-
-def pair(val):
-    ret = (val, val) if not isinstance(val, tuple) else val
-    assert len(ret) == 2
-    return ret
-
-
-def cast_tuple(val, l=1):
-    return val if isinstance(val, tuple) else (val,) * l
 
 
 def gradient_penalty(images, output, weight=10, device: Device = None):
@@ -77,14 +32,6 @@ def gradient_penalty(images, output, weight=10, device: Device = None):
     return weight * ((gradients.norm(2, dim=1) - 1) ** 2).mean()
 
 
-def l2norm(t):
-    return F.normalize(t, dim=-1)
-
-
-def leaky_relu(p=0.1):
-    return nn.LeakyReLU(p)
-
-
 def safe_div(numer, denom, eps=1e-8):
     return numer / (denom + eps)
 
@@ -92,16 +39,8 @@ def safe_div(numer, denom, eps=1e-8):
 # gan losses
 
 
-def hinge_discr_loss(fake, real):
-    return (F.relu(1 + fake) + F.relu(1 - real)).mean()
-
-
 def hinge_gen_loss(fake):
     return -fake.mean()
-
-
-def bce_discr_loss(fake, real):
-    return (-log(1 - torch.sigmoid(fake)) - log(torch.sigmoid(real))).mean()
 
 
 def bce_gen_loss(fake):

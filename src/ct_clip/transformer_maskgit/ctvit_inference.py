@@ -11,6 +11,7 @@ from ema_pytorch import EMA
 from torch import nn
 from torch.utils.data import BatchSampler, DataLoader, random_split
 
+from ct_clip.helpers import cycle, noop
 from ctvit import CTViT
 from data import ImageDataset, VideoDataset, tensor_to_nifti
 from optimizer import get_optimizer
@@ -19,34 +20,9 @@ from optimizer import get_optimizer
 # helpers
 
 
-def exists(val):
-    return val is not None
-
-
-def noop(*args, **kwargs):
-    pass
-
-
-def cycle(dl):
-    while True:
-        for data in dl:
-            yield data
-
-
-def cast_tuple(t):
-    return t if isinstance(t, (tuple, list)) else (t,)
-
-
 def yes_or_no(question):
     answer = input(f"{question} (y/n) ")
     return answer.lower() in ("yes", "y")
-
-
-def accum_log(log, new_logs):
-    for key, new_value in new_logs.items():
-        old_value = log.get(key, 0.0)
-        log[key] = old_value + new_value
-    return log
 
 
 # main trainer class

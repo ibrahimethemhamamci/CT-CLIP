@@ -7,6 +7,8 @@ from einops import rearrange
 from torch import nn
 from torchvision import transforms as T
 
+from ct_clip.helpers import default, l2norm, noop
+
 
 # augmentations
 
@@ -52,10 +54,6 @@ def get_default_aug(image_size, channels=3):
 # helper functions
 
 
-def default(val, def_val):
-    return def_val if val is None else val
-
-
 def flatten(t):
     return t.reshape(t.shape[0], -1)
 
@@ -84,10 +82,6 @@ def get_module_device(module):
 def set_requires_grad(model, val):
     for p in model.parameters():
         p.requires_grad = val
-
-
-def l2norm(t):
-    return F.normalize(t, p=2, dim=-1)
 
 
 # simclr loss fn
