@@ -119,13 +119,3 @@ and
 ```bash
 $ python report_to_volume.py
 ```
-
-## T-SNE Plots:
-
-To generate T-SNE plots, first, compute the latent representations for both training and validation data as previously described. Then, update the file paths in `tsne_latents.py` accordingly and execute the script using the following command:
-
-```bash
-$ python tsne_latents.py
-```
-
-
