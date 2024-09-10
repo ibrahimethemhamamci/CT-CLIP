@@ -13,11 +13,15 @@ from einops import rearrange, pack, unpack
 from einops.layers.torch import Rearrange
 from torch import nn
 
-from attention import Transformer, ContinuousPositionBias
 from ct_clip.helpers import cast_tuple, default, exists, log
+from ct_clip.transformer_maskgit.attention import Transformer, ContinuousPositionBias
+from ct_clip.transformer_maskgit.ctvit import CTViT
+from ct_clip.transformer_maskgit.t5 import (
+    t5_encode_text,
+    get_encoded_dim,
+    DEFAULT_T5_NAME,
+)
 from ct_clip.types import Device
-from ctvit import CTViT
-from t5 import t5_encode_text, get_encoded_dim, DEFAULT_T5_NAME
 
 
 # helpers

@@ -1,7 +1,7 @@
 from transformers import BertTokenizer, BertModel
 
 from ct_clip import CTCLIP, CTViT
-from zero_shot import CTClipInference
+from ct_clip.scripts.zero_shot import CTClipInference
 
 
 def main(

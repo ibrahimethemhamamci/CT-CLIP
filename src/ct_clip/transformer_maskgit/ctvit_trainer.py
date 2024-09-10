@@ -13,9 +13,9 @@ from torch.utils.data import DataLoader, random_split
 from torchvision.utils import make_grid, save_image
 
 from ct_clip.helpers import cycle, exists, noop
-from ctvit import CTViT
-from data import ImageDataset, VideoDataset, tensor_to_nifti
-from optimizer import get_optimizer
+from ct_clip.transformer_maskgit.ctvit import CTViT
+from ct_clip.transformer_maskgit.data import ImageDataset, VideoDataset, tensor_to_nifti
+from ct_clip.transformer_maskgit.optimizer import get_optimizer
 
 
 # helpers

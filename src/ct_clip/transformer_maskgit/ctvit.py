@@ -9,7 +9,7 @@ from torch.autograd import grad as torch_grad
 from torchvision import transforms as T
 from vector_quantize_pytorch import VectorQuantize
 
-from attention import Transformer, ContinuousPositionBias
+from ct_clip.transformer_maskgit.attention import Transformer, ContinuousPositionBias
 from ct_clip.helpers import exists, log, pair
 from ct_clip.types import Device
 

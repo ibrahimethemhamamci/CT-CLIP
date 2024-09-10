@@ -12,8 +12,8 @@ from torch.utils.checkpoint import checkpoint
 
 from ct_clip.helpers import cast_tuple, exists, identity, l2norm, log
 from ct_clip.types import Device
-from mlm import MLM
-from visual_ssl import SimSiam, SimCLR
+from ct_clip.ct_clip.mlm import MLM
+from ct_clip.ct_clip.visual_ssl import SimSiam, SimCLR
 
 
 @contextmanager

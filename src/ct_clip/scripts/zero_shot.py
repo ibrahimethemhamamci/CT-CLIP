@@ -3,7 +3,6 @@ from pathlib import Path
 import math
 import nibabel as nib
 import numpy as np
-import pandas as pd
 import torch
 import torch.optim.lr_scheduler as lr_scheduler
 import tqdm
@@ -15,8 +14,7 @@ from transformers import BertTokenizer
 
 from ct_clip import CTCLIP, get_optimizer
 from ct_clip.helpers import noop, cycle
-from data_inference import CTReportDatasetinfer
-from eval import evaluate_internal
+from ct_clip.scripts.data_inference import CTReportDatasetinfer
 
 
 # helpers
