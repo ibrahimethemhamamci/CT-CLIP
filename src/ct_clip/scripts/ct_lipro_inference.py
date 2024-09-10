@@ -9,8 +9,7 @@ import tqdm
 from torch.utils.data import DataLoader
 from transformers import BertTokenizer, BertModel
 
-from ct_clip.ct_clip import CTCLIP
-from ct_clip.transformer_maskgit import CTViT
+from ct_clip import CTCLIP, CTViT
 from data_inference import CTReportDatasetinfer
 from eval import evaluate_internal, sigmoid
 from src.args import parse_arguments

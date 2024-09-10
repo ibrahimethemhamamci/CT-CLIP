@@ -12,8 +12,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from transformers import BertTokenizer
 
-from ct_clip.ct_clip import CTCLIP
-from ct_clip.transformer_maskgit.optimizer import get_optimizer
+from ct_clip import CTCLIP, get_optimizer
 from data_inference import CTReportDatasetinfer
 from eval import evaluate_internal
 

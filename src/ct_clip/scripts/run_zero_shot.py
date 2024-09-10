@@ -1,7 +1,6 @@
 from transformers import BertTokenizer, BertModel
 
-from ct_clip.ct_clip import CTCLIP
-from ct_clip.transformer_maskgit import CTViT
+from ct_clip import CTCLIP, CTViT
 from zero_shot import CTClipInference
 
 tokenizer = BertTokenizer.from_pretrained(
