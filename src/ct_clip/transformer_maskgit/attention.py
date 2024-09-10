@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from beartype import beartype
 from einops import rearrange, repeat
-from torch import nn, einsum
+from torch import nn, einsum, Tensor
 
 from ct_clip.types import Device
 
@@ -27,6 +27,9 @@ def leaky_relu(p=0.1):
 
 def l2norm(t):
     return F.normalize(t, dim=-1)
+
+
+MPS = torch.device("mps")
 
 
 # bias-less layernorm, being used in more recent T5s, PaLM, also in @borisdayma 's experiments shared with me
@@ -73,7 +76,7 @@ class PEG(nn.Module):
         self.dsconv = nn.Conv3d(dim, dim, 3, groups=dim)
 
     @beartype
-    def forward(self, x, shape: Tuple[int, int, int, int] = None):
+    def forward(self, x: Tensor, shape: Tuple[int, int, int, int] = None):
         needs_shape = x.ndim == 3
         assert not (needs_shape and not exists(shape))
 
@@ -87,7 +90,9 @@ class PEG(nn.Module):
         frame_padding = (2, 0) if self.causal else (1, 1)
 
         x = F.pad(x, (1, 1, 1, 1, *frame_padding), value=0.0)
-        x = self.dsconv(x)
+        # Conv3D is not supported on MPS for PyTorch < 2.3.0
+        device = x.device
+        x = self.dsconv(x.to("cpu")).to(device) if device == MPS else self.dsconv(x)
 
         x = rearrange(x, "b d ... -> b ... d")
 
