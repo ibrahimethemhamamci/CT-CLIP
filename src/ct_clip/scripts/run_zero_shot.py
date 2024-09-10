@@ -4,7 +4,12 @@ from ct_clip import CTCLIP, CTViT
 from zero_shot import CTClipInference
 
 
-def main():
+def main(
+    path_to_pretrained_model: str,
+    path_to_preprocessed_validation_folder: str,
+    path_to_validation_reports_csv: str,
+    path_to_validation_labels_csv: str,
+):
     tokenizer = BertTokenizer.from_pretrained(
         "microsoft/BiomedVLP-CXR-BERT-specialized", do_lower_case=True
     )
@@ -36,13 +41,12 @@ def main():
         use_all_token_embeds=False,
     )
 
-    clip.load("path_to_pretrained_model")
-
     inference = CTClipInference(
         clip,
-        data_folder="path_to_preprocessed_validation_folder",
-        reports_file="path_to_validation_reports_csv",
-        labels="path_to_validation_labels_csv",
+        path_to_pretrained_model=path_to_pretrained_model,
+        data_folder=path_to_preprocessed_validation_folder,
+        reports_file=path_to_validation_reports_csv,
+        labels=path_to_validation_labels_csv,
         batch_size=1,
         results_folder="inference_zeroshot/",
         num_train_steps=1,

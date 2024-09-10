@@ -134,6 +134,7 @@ class CTClipInference(nn.Module):
     def __init__(
         self,
         CTClip: CTCLIP,
+        path_to_pretrained_model: str,
         *,
         num_train_steps,
         batch_size,
@@ -146,10 +147,11 @@ class CTClipInference(nn.Module):
         save_model_every=2000,
         results_folder="./results",
         labels="labels.csv",
-        accelerate_kwargs: dict = dict(),
+        accelerate_kwargs: dict = None,
     ):
         super().__init__()
         ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
+        accelerate_kwargs = accelerate_kwargs or {}
         self.accelerator = Accelerator(
             kwargs_handlers=[ddp_kwargs], **accelerate_kwargs
         )
@@ -185,7 +187,7 @@ class CTClipInference(nn.Module):
         # prepare with accelerator
         self.dl_iter = cycle(self.dl)
         self.device = self.accelerator.device
-        self.CTClip.to(self.device)
+        self.CTClip.load(path_to_pretrained_model, self.device)
         self.lr_scheduler = CosineAnnealingWarmUpRestarts(
             self.optim,
             T_0=4000000,  # Maximum number of iterations
@@ -244,89 +246,41 @@ class CTClipInference(nn.Module):
         if True:
             with torch.no_grad():
 
-                models_to_evaluate: tuple[tuple[nn.Module, str], ...] = (
-                    (self.CTClip, str(steps)),
-                )
+                models_to_evaluate = ((self.CTClip, str(steps)),)
 
                 for model, filename in models_to_evaluate:
                     model.eval()
-                    predictedall = []
-                    realall = []
-                    logits = []
-
-                    text_latent_list = []
-                    image_latent_list = []
-                    accession_names = []
-                    pathologies = [
-                        "Medical material",
-                        "Arterial wall calcification",
-                        "Cardiomegaly",
-                        "Pericardial effusion",
-                        "Coronary artery wall calcification",
-                        "Hiatal hernia",
-                        "Lymphadenopathy",
-                        "Emphysema",
-                        "Atelectasis",
-                        "Lung nodule",
-                        "Lung opacity",
-                        "Pulmonary fibrotic sequela",
-                        "Pleural effusion",
-                        "Mosaic attenuation pattern",
-                        "Peribronchial thickening",
-                        "Consolidation",
-                        "Bronchiectasis",
-                        "Interlobular septal thickening",
-                    ]
                     for _ in tqdm.tqdm(range(len(self.ds))):
                         valid_data, text, onehotlabels, acc_name = next(self.dl_iter)
 
                         plotdir = self.result_folder_txt
                         Path(plotdir).mkdir(parents=True, exist_ok=True)
 
-                        predictedlabels = []
-                        onehotlabels_append = []
+                        text_tokens = self.tokenizer(
+                            text,
+                            return_tensors="pt",
+                            padding="max_length",
+                            truncation=True,
+                            max_length=512,
+                        ).to(device)
 
-                        for pathology in pathologies:
-                            text = [f"{pathology}.", f"not {pathology}."]
-                            text_tokens = self.tokenizer(
-                                text,
-                                return_tensors="pt",
-                                padding="max_length",
-                                truncation=True,
-                                max_length=512,
-                            ).to(device)
+                        output = model(
+                            text_tokens,
+                            valid_data.to(device),
+                            return_latents=True,
+                            device=device,
+                        )
 
-                            output = model(
-                                text_tokens, valid_data.to(device), device=device
-                            )
+                        filename = acc_name[0].split(".")[0]
+                        np.save(
+                            f"{plotdir}{filename}.image.npy",
+                            output[1].detach().cpu().numpy(),
+                        )
+                        np.save(
+                            f"{plotdir}{filename}.text.npy",
+                            output[0].detach().cpu().numpy(),
+                        )
 
-                            output = apply_softmax(output)
-
-                            append_out = output.detach().cpu().numpy()
-                            predictedlabels.append(append_out[0])
-
-                        predictedall.append(predictedlabels)
-                        realall.append(onehotlabels.detach().cpu().numpy()[0])
-                        accession_names.append(acc_name[0])
-
-                    realall = np.array(realall)
-                    predictedall = np.array(predictedall)
-
-                    np.savez(f"{plotdir}labels_weights.npz", data=realall)
-                    np.savez(f"{plotdir}predicted_weights.npz", data=predictedall)
-                    with open(f"{plotdir}accessions.txt", "w") as file:
-                        for item in accession_names:
-                            file.write(item + "\n")
-
-                    dfs = evaluate_internal(predictedall, realall, pathologies, plotdir)
-
-                    writer = pd.ExcelWriter(
-                        f"{plotdir}aurocs.xlsx", engine="xlsxwriter"
-                    )
-
-                    dfs.to_excel(writer, sheet_name="Sheet1", index=False)
-
-                    writer.close()
         self.steps += 1
         return logs
 
