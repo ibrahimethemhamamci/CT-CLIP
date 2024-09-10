@@ -244,7 +244,9 @@ class CTClipInference(nn.Module):
         if True:
             with torch.no_grad():
 
-                models_to_evaluate = ((self.CTClip, str(steps)),)
+                models_to_evaluate: tuple[tuple[nn.Module, str], ...] = (
+                    (self.CTClip, str(steps)),
+                )
 
                 for model, filename in models_to_evaluate:
                     model.eval()
@@ -275,7 +277,7 @@ class CTClipInference(nn.Module):
                         "Bronchiectasis",
                         "Interlobular septal thickening",
                     ]
-                    for i in tqdm.tqdm(range(len(self.ds))):
+                    for _ in tqdm.tqdm(range(len(self.ds))):
                         valid_data, text, onehotlabels, acc_name = next(self.dl_iter)
 
                         plotdir = self.result_folder_txt
