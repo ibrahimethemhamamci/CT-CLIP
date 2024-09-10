@@ -2,13 +2,14 @@ from pathlib import Path
 from shutil import rmtree
 
 import nibabel as nib
+import numpy as np
 import torch
 import tqdm
 from accelerate import Accelerator
 from beartype import beartype
 from ema_pytorch import EMA
 from torch import nn
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import BatchSampler, DataLoader, random_split
 
 from ctvit import CTViT
 from data import ImageDataset, VideoDataset, tensor_to_nifti
@@ -49,9 +50,6 @@ def accum_log(log, new_logs):
 
 
 # main trainer class
-
-import numpy as np
-from torch.utils.data import BatchSampler
 
 
 class CustomBatchSampler(BatchSampler):
