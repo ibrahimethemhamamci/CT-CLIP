@@ -1,4 +1,3 @@
-import copy
 import os
 
 import numpy as np
@@ -47,7 +46,7 @@ class ImageLatentsClassifier(nn.Module):
         self.load_state_dict(loaded_state_dict)
 
 
-def evaluate_model(args, model, dataloader, device):
+def evaluate_model(args, model, dataloader, tokenizer, device):
     model.eval()  # Set the model to evaluation mode
     model = model.to(device)
     correct = 0
@@ -121,7 +120,7 @@ def evaluate_model(args, model, dataloader, device):
         writer.close()
 
 
-if __name__ == "__main__":
+def main():
     args = parse_arguments()  # Assuming this function provides necessary arguments
 
     tokenizer = BertTokenizer.from_pretrained(
@@ -157,7 +156,7 @@ if __name__ == "__main__":
 
     num_classes = 18  # you need to specify the number of classes here
     image_classifier = ImageLatentsClassifier(clip, 512, num_classes)
-    zero_shot = copy.deepcopy(image_classifier)
+    # zero_shot = copy.deepcopy(image_classifier)
 
     image_classifier.load(
         args.pretrained
@@ -170,4 +169,4 @@ if __name__ == "__main__":
     dl = DataLoader(ds, num_workers=8, batch_size=1, shuffle=False)
 
     # Evaluate the model
-    evaluate_model(args, image_classifier, dl, torch.device("cuda"))
+    evaluate_model(args, image_classifier, dl, tokenizer, torch.device("cuda"))
