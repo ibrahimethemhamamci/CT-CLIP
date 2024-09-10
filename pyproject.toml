@@ -51,6 +51,5 @@ dependencies = [
     "XlsxWriter",
 ]
 
-# TODO
-#[project.scripts]
-#spam-cli = "spam:main_cli"
+[project.scripts]
+run-zero-shot = "ct_clip.scripts.run_zero_shot:main_cli"
