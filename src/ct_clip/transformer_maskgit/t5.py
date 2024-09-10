@@ -8,26 +8,31 @@ transformers.logging.set_verbosity_error()
 
 # helper functions
 
+
 def exists(val):
     return val is not None
+
 
 # config
 
 MAX_LENGTH = 256
 
-DEFAULT_T5_NAME = 'google/t5-v1_1-base'
+DEFAULT_T5_NAME = "google/t5-v1_1-base"
 
 T5_CONFIGS = {}
 
 # singleton globals
 
+
 def get_tokenizer(name):
     tokenizer = T5Tokenizer.from_pretrained(name)
     return tokenizer
 
+
 def get_model(name):
     model = T5EncoderModel.from_pretrained(name)
     return model
+
 
 def get_model_and_tokenizer(name):
     global T5_CONFIGS
@@ -41,12 +46,13 @@ def get_model_and_tokenizer(name):
     if "tokenizer" not in T5_CONFIGS[name]:
         T5_CONFIGS[name]["tokenizer"] = get_tokenizer(name)
 
-    return T5_CONFIGS[name]['model'], T5_CONFIGS[name]['tokenizer']
+    return T5_CONFIGS[name]["model"], T5_CONFIGS[name]["tokenizer"]
+
 
 def get_encoded_dim(name):
     if name not in T5_CONFIGS:
         config = T5Config.from_pretrained(name)
-        T5_CONFIGS[name] = dict(config = config)
+        T5_CONFIGS[name] = dict(config=config)
 
     elif "config" in T5_CONFIGS[name]:
         config = T5_CONFIGS[name]["config"]
@@ -55,50 +61,48 @@ def get_encoded_dim(name):
         config = T5_CONFIGS[name]["model"].config
 
     else:
-        raise ValueError(f'unknown t5 name {name}')
+        raise ValueError(f"unknown t5 name {name}")
 
     return config.d_model
 
+
 # encoding text
 
-def t5_encode_text(
-    texts,
-    name = DEFAULT_T5_NAME,
-    output_device = None
-):
+
+def t5_encode_text(texts, name=DEFAULT_T5_NAME, output_device=None):
     t5, tokenizer = get_model_and_tokenizer(name)
 
     if torch.cuda.is_available():
         t5 = t5.cuda()
-    
+
     t5.requires_grad = False
     device = next(t5.parameters()).device
-   
+
     encoded = tokenizer.batch_encode_plus(
         texts,
-        return_tensors = 'pt',
-        padding = 'longest',
-        max_length = MAX_LENGTH,
-        truncation = True
+        return_tensors="pt",
+        padding="longest",
+        max_length=MAX_LENGTH,
+        truncation=True,
     )
 
     input_ids = encoded.input_ids.to(device)
     attn_mask = encoded.attention_mask.to(device)
 
     t5.eval()
-    
+
     with torch.no_grad():
-        output = t5(input_ids = input_ids, attention_mask = attn_mask)
+        output = t5(input_ids=input_ids, attention_mask=attn_mask)
         encoded_text = output.last_hidden_state.detach()
 
     attn_mask = attn_mask[..., None].bool()
 
     if not exists(output_device):
-        encoded_text = encoded_text.masked_fill(~attn_mask, 0.)
+        encoded_text = encoded_text.masked_fill(~attn_mask, 0.0)
         return encoded_text
 
     encoded_text = encoded_text.to(output_device)
     attn_mask = attn_mask.to(output_device)
 
-    encoded_text = encoded_text.masked_fill(~attn_mask, 0.)
+    encoded_text = encoded_text.masked_fill(~attn_mask, 0.0)
     return encoded_text

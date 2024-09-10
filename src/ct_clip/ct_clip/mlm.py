@@ -7,20 +7,23 @@ import torch.nn.functional as F
 
 # helpers
 
+
 def prob_mask_like(t, prob):
     return torch.zeros_like(t).float().uniform_(0, 1) < prob
+
 
 def mask_with_tokens(t, token_ids):
     init_no_mask = torch.full_like(t, False, dtype=torch.bool)
     mask = reduce(lambda acc, el: acc | (t == el), token_ids, init_no_mask)
     return mask
 
+
 def get_mask_subset_with_prob(mask, prob):
     batch, seq_len, device = *mask.shape, mask.device
     max_masked = math.ceil(prob * seq_len)
 
     num_tokens = mask.sum(dim=-1, keepdim=True)
-    mask_excess = (mask.cumsum(dim=-1) > (num_tokens * prob).ceil())
+    mask_excess = mask.cumsum(dim=-1) > (num_tokens * prob).ceil()
     mask_excess = mask_excess[:, :max_masked]
 
     rand = torch.rand((batch, seq_len), device=device).masked_fill(~mask, -1e9)
@@ -31,7 +34,9 @@ def get_mask_subset_with_prob(mask, prob):
     new_mask.scatter_(-1, sampled_indices, 1)
     return new_mask[:, 1:].bool()
 
+
 # main class
+
 
 class MLM(nn.Module):
     def __init__(
@@ -40,12 +45,13 @@ class MLM(nn.Module):
         *,
         dim,
         num_tokens,
-        mask_prob = 0.15,
-        replace_prob = 0.9,
-        random_token_prob = 0.,
-        mask_token_id = 2,
-        pad_token_id = 0,
-        mask_ignore_token_ids = []):
+        mask_prob=0.15,
+        replace_prob=0.9,
+        random_token_prob=0.0,
+        mask_token_id=2,
+        pad_token_id=0,
+        mask_ignore_token_ids=[],
+    ):
         super().__init__()
 
         self.transformer = transformer
@@ -79,9 +85,13 @@ class MLM(nn.Module):
 
         # if random token probability > 0 for mlm
         if self.random_token_prob > 0:
-            assert self.num_tokens is not None, 'num_tokens keyword must be supplied when instantiating MLM if using random token replacement'
+            assert (
+                self.num_tokens is not None
+            ), "num_tokens keyword must be supplied when instantiating MLM if using random token replacement"
             random_token_prob = prob_mask_like(seq, self.random_token_prob)
-            random_tokens = torch.randint(0, self.num_tokens, seq.shape, device = seq.device)
+            random_tokens = torch.randint(
+                0, self.num_tokens, seq.shape, device=seq.device
+            )
             random_no_mask = mask_with_tokens(random_tokens, self.mask_ignore_token_ids)
             random_token_prob &= ~random_no_mask
             masked_seq = torch.where(random_token_prob, random_tokens, masked_seq)
@@ -101,9 +111,7 @@ class MLM(nn.Module):
         logits = logits[:, 1:]
 
         mlm_loss = F.cross_entropy(
-            logits.transpose(1, 2),
-            labels,
-            ignore_index = self.pad_token_id
+            logits.transpose(1, 2), labels, ignore_index=self.pad_token_id
         )
 
         return mlm_loss
