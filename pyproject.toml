@@ -19,7 +19,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
 ]
-requires-python = ">= 3.8"  # This is a guess
+requires-python = ">= 3.8, < 3.12"  # Lower limit is a guess, upper limit is for compatibility with torch 2.0.1
 dependencies = [
     "accelerate",
     "attr",
