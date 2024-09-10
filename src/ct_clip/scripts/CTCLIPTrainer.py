@@ -3,6 +3,7 @@ from pathlib import Path
 from shutil import rmtree
 
 import math
+import nibabel as nib
 import numpy as np
 import pandas as pd
 import torch
