@@ -1,16 +1,17 @@
 from pathlib import Path
 from shutil import rmtree
-from transformer_maskgit.optimizer import get_optimizer
+from optimizer import get_optimizer
 
 import torch
 from torch import nn
 from torch.utils.data import Dataset, DataLoader, random_split
 from torch.utils.data.distributed import DistributedSampler
 
-from transformer_maskgit import CTViT, MaskGit, MaskGITTransformer
-from transformer_maskgit.videotextdataset import VideoTextDataset
+from ctvit import CTViT
+from MaskGITTransformer import MaskGit, MaskGITTransformer
+from videotextdataset import VideoTextDataset
 
-from transformer_maskgit.data import tensor_to_nifti
+from data import tensor_to_nifti
 
 from einops import rearrange
 import accelerate

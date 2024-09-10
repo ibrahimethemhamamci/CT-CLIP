@@ -15,12 +15,12 @@ from torchvision.utils import make_grid, save_image
 
 from einops import rearrange
 
-from transformer_maskgit.optimizer import get_optimizer
+from optimizer import get_optimizer
 
 from ema_pytorch import EMA
 
-from transformer_maskgit.ctvit import CTViT
-from transformer_maskgit.data import ImageDataset, VideoDataset, tensor_to_nifti
+from ctvit import CTViT
+from data import ImageDataset, VideoDataset, tensor_to_nifti
 
 from accelerate import Accelerator
 

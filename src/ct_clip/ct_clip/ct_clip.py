@@ -11,8 +11,8 @@ from torch.utils.checkpoint import checkpoint
 from einops import rearrange, repeat, reduce
 from einops.layers.torch import Rearrange, Reduce
 
-from ct_clip.mlm import MLM
-from ct_clip.visual_ssl import SimSiam, SimCLR
+from mlm import MLM
+from visual_ssl import SimSiam, SimCLR
 
 # helper functions
 

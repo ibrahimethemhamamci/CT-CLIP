@@ -17,7 +17,7 @@ from einops.layers.torch import Rearrange
 
 from vector_quantize_pytorch import VectorQuantize
 
-from transformer_maskgit.attention import Attention, Transformer, ContinuousPositionBias
+from attention import Attention, Transformer, ContinuousPositionBias
 
 # helpers
 

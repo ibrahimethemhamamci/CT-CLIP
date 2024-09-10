@@ -14,10 +14,10 @@ from torch import nn, einsum
 from einops import rearrange, repeat, pack, unpack
 from einops.layers.torch import Rearrange
 
-from transformer_maskgit.t5 import t5_encode_text, get_encoded_dim, DEFAULT_T5_NAME
+from t5 import t5_encode_text, get_encoded_dim, DEFAULT_T5_NAME
 
-from transformer_maskgit.ctvit import CTViT
-from transformer_maskgit.attention import Attention, Transformer, ContinuousPositionBias
+from ctvit import CTViT
+from attention import Attention, Transformer, ContinuousPositionBias
 
 # helpers
 
