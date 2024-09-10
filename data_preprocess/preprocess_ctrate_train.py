@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from multiprocessing import Pool
 from tqdm import tqdm
 
+
 def read_nii_files(directory):
     """
     Retrieve paths of all NIfTI files in the given directory.
@@ -20,9 +21,10 @@ def read_nii_files(directory):
     nii_files = []
     for root, dirs, files in os.walk(directory):
         for file in files:
-            if file.endswith('.nii.gz'):
+            if file.endswith(".nii.gz"):
                 nii_files.append(os.path.join(root, file))
     return nii_files
+
 
 def read_nii_data(file_path):
     """
@@ -41,6 +43,7 @@ def read_nii_data(file_path):
     except Exception as e:
         print(f"Error reading file {file_path}: {e}")
         return None
+
 
 def resize_array(array, current_spacing, target_spacing):
     """
@@ -63,8 +66,13 @@ def resize_array(array, current_spacing, target_spacing):
         int(original_shape[i] * scaling_factors[i]) for i in range(len(original_shape))
     ]
     # Resize the array
-    resized_array = F.interpolate(array, size=new_shape, mode='trilinear', align_corners=False).cpu().numpy()
+    resized_array = (
+        F.interpolate(array, size=new_shape, mode="trilinear", align_corners=False)
+        .cpu()
+        .numpy()
+    )
     return resized_array
+
 
 def process_file(file_path):
     """
@@ -83,7 +91,7 @@ def process_file(file_path):
 
     file_name = os.path.basename(file_path)
 
-    row = df[df['VolumeName'] == file_name]
+    row = df[df["VolumeName"] == file_name]
     slope = float(row["RescaleSlope"].iloc[0])
     intercept = float(row["RescaleIntercept"].iloc[0])
     xy_spacing = float(row["XYSpacing"].iloc[0][1:][:-2].split(",")[0])
@@ -109,19 +117,24 @@ def process_file(file_path):
     resized_array = resize_array(tensor, current, target)
     resized_array = resized_array[0][0]
 
-    save_folder = "train_preprocessed/" #save folder for preprocessed
-    folder_path_new = os.path.join(save_folder, "train_" + file_name.split("_")[1], "train_" + file_name.split("_")[1] + file_name.split("_")[2]) #folder name for train or validation
+    save_folder = "train_preprocessed/"  # save folder for preprocessed
+    folder_path_new = os.path.join(
+        save_folder,
+        "train_" + file_name.split("_")[1],
+        "train_" + file_name.split("_")[1] + file_name.split("_")[2],
+    )  # folder name for train or validation
     os.makedirs(folder_path_new, exist_ok=True)
-    file_name = file_name.split(".")[0]+".npz"
+    file_name = file_name.split(".")[0] + ".npz"
     save_path = os.path.join(folder_path_new, file_name)
     np.savez(save_path, resized_array)
 
+
 # Example usage:
 if __name__ == "__main__":
-    split_to_preprocess = 'train' #select the validation or test split
+    split_to_preprocess = "train"  # select the validation or test split
     nii_files = read_nii_files(split_to_preprocess)
 
-    df = pd.read_csv("train_metadata.csv") #select the metadata
+    df = pd.read_csv("train_metadata.csv")  # select the metadata
 
     num_workers = 18  # Number of worker processes
 

@@ -1,7 +1,7 @@
 import torch
 import copy
 
-#import clip.clip as clip
+# import clip.clip as clip
 
 from src.models import utils
 
@@ -11,24 +11,25 @@ class ImageEncoder(torch.nn.Module):
         super().__init__()
 
         self.model, self.train_preprocess, self.val_preprocess = clip.load(
-            args.model, args.device, jit=False)
-        
+            args.model, args.device, jit=False
+        )
+
         self.cache_dir = args.cache_dir
 
-        if not keep_lang and hasattr(self.model, 'transformer'):
-            delattr(self.model, 'transformer')
+        if not keep_lang and hasattr(self.model, "transformer"):
+            delattr(self.model, "transformer")
 
     def forward(self, images):
         assert self.model is not None
         return self.model.encode_image(images)
 
     def save(self, filename):
-        print(f'Saving image encoder to {filename}')
+        print(f"Saving image encoder to {filename}")
         utils.torch_save(self, filename)
 
     @classmethod
     def load(cls, filename):
-        print(f'Loading image encoder from {filename}')
+        print(f"Loading image encoder from {filename}")
         return utils.torch_load(filename)
 
 
@@ -50,12 +51,12 @@ class ClassificationHead(torch.nn.Linear):
         return super().forward(inputs)
 
     def save(self, filename):
-        print(f'Saving classification head to {filename}')
+        print(f"Saving classification head to {filename}")
         utils.torch_save(self, filename)
 
     @classmethod
     def load(cls, filename):
-        print(f'Loading classification head from {filename}')
+        print(f"Loading classification head from {filename}")
         return utils.torch_load(filename)
 
 
@@ -65,9 +66,10 @@ class ImageClassifier(torch.nn.Module):
         self.image_encoder = image_encoder
         self.classification_head = classification_head
         self.process_images = process_images
-       #if self.image_encoder is not None:
-       #     self.train_preprocess = self.image_encoder.train_preprocess
-       #     self.val_preprocess = self.image_encoder.val_preprocess
+
+    # if self.image_encoder is not None:
+    #     self.train_preprocess = self.image_encoder.train_preprocess
+    #     self.val_preprocess = self.image_encoder.val_preprocess
 
     def forward(self, inputs):
         if self.process_images:
@@ -76,10 +78,10 @@ class ImageClassifier(torch.nn.Module):
         return outputs
 
     def save(self, filename):
-        print(f'Saving image classifier to {filename}')
+        print(f"Saving image classifier to {filename}")
         utils.torch_save(self, filename)
 
     @classmethod
     def load(cls, filename):
-        print(f'Loading image classifier from {filename}')
+        print(f"Loading image classifier from {filename}")
         return utils.torch_load(filename)

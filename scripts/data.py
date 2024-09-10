@@ -12,43 +12,50 @@ import torch.nn.functional as F
 import nibabel as nib
 import tqdm
 
+
 class CTReportDataset(Dataset):
-    def __init__(self, data_folder, csv_file, min_slices=20, resize_dim=500, force_num_frames=True):
+    def __init__(
+        self,
+        data_folder,
+        csv_file,
+        min_slices=20,
+        resize_dim=500,
+        force_num_frames=True,
+    ):
         self.data_folder = data_folder
         self.min_slices = min_slices
         self.accession_to_text = self.load_accession_text(csv_file)
-        self.paths=[]
+        self.paths = []
         self.samples = self.prepare_samples()
         percent = 100
-        #num_files = int((len(self.samples) * percent) / 100)
-        #self.samples = self.samples[:num_files]
+        # num_files = int((len(self.samples) * percent) / 100)
+        # self.samples = self.samples[:num_files]
         print(len(self.samples))
 
-
-
-        #self.resize_dim = resize_dim
-        #self.resize_transform = transforms.Resize((resize_dim, resize_dim))
-        self.transform = transforms.Compose([
-            transforms.Resize((resize_dim,resize_dim)),
-            transforms.ToTensor()
-        ])
-        self.nii_to_tensor = partial(self.nii_img_to_tensor, transform = self.transform)
+        # self.resize_dim = resize_dim
+        # self.resize_transform = transforms.Resize((resize_dim, resize_dim))
+        self.transform = transforms.Compose(
+            [transforms.Resize((resize_dim, resize_dim)), transforms.ToTensor()]
+        )
+        self.nii_to_tensor = partial(self.nii_img_to_tensor, transform=self.transform)
 
     def load_accession_text(self, csv_file):
         df = pd.read_csv(csv_file)
         accession_to_text = {}
         for index, row in df.iterrows():
-            accession_to_text[row['VolumeName']] = row["Findings_EN"],row['Impressions_EN']
+            accession_to_text[row["VolumeName"]] = (
+                row["Findings_EN"],
+                row["Impressions_EN"],
+            )
 
         return accession_to_text
 
-
     def prepare_samples(self):
         samples = []
-        for patient_folder in tqdm.tqdm(glob.glob(os.path.join(self.data_folder, '*'))):
-            for accession_folder in glob.glob(os.path.join(patient_folder, '*')):
+        for patient_folder in tqdm.tqdm(glob.glob(os.path.join(self.data_folder, "*"))):
+            for accession_folder in glob.glob(os.path.join(patient_folder, "*")):
 
-                for nii_file in glob.glob(os.path.join(accession_folder, '*.npz')):
+                for nii_file in glob.glob(os.path.join(accession_folder, "*.npz")):
                     accession_number = nii_file.split("/")[-1]
                     accession_number = accession_number.replace(".npz", ".nii.gz")
                     if accession_number not in self.accession_to_text:
@@ -57,12 +64,12 @@ class CTReportDataset(Dataset):
                     impression_text = self.accession_to_text[accession_number]
 
                     if impression_text == "Not given.":
-                        impression_text=""
+                        impression_text = ""
 
                     input_text_concat = ""
                     for text in impression_text:
                         input_text_concat = input_text_concat + str(text)
-                    input_text = f'{impression_text}'
+                    input_text = f"{impression_text}"
                     samples.append((nii_file, input_text_concat))
                     self.paths.append(nii_file)
         return samples
@@ -71,23 +78,23 @@ class CTReportDataset(Dataset):
         return len(self.samples)
 
     def nii_img_to_tensor(self, path, transform):
-        #nii_img = nib.load(str(path))
+        # nii_img = nib.load(str(path))
         try:
-            img_data = np.load(path)['arr_0']
+            img_data = np.load(path)["arr_0"]
         except:
             img_data = np.load(path)["data"]
-        img_data= np.transpose(img_data, (1, 2, 0))
-        img_data = img_data*1000
+        img_data = np.transpose(img_data, (1, 2, 0))
+        img_data = img_data * 1000
         hu_min, hu_max = -1000, 200
         img_data = np.clip(img_data, hu_min, hu_max)
 
-        img_data = (((img_data+400 ) / 600)).astype(np.float32)
-        slices=[]
+        img_data = (((img_data + 400) / 600)).astype(np.float32)
+        slices = []
 
         tensor = torch.tensor(img_data)
         # Get the dimensions of the input tensor
-        target_shape = (480,480,240)
-        
+        target_shape = (480, 480, 240)
+
         # Extract dimensions
         h, w, d = tensor.shape
 
@@ -112,21 +119,31 @@ class CTReportDataset(Dataset):
         pad_d_before = (dd - tensor.size(2)) // 2
         pad_d_after = dd - tensor.size(2) - pad_d_before
 
-        tensor = torch.nn.functional.pad(tensor, (pad_d_before, pad_d_after, pad_w_before, pad_w_after, pad_h_before, pad_h_after), value=-1)
+        tensor = torch.nn.functional.pad(
+            tensor,
+            (
+                pad_d_before,
+                pad_d_after,
+                pad_w_before,
+                pad_w_after,
+                pad_h_before,
+                pad_h_after,
+            ),
+            value=-1,
+        )
 
         tensor = tensor.permute(2, 0, 1)
-        
+
         tensor = tensor.unsqueeze(0)
 
         return tensor
 
-    
     def __getitem__(self, index):
         nii_file, input_text = self.samples[index]
         video_tensor = self.nii_to_tensor(nii_file)
-        input_text = input_text.replace('"', '')  
-        input_text = input_text.replace('\'', '')  
-        input_text = input_text.replace('(', '')  
-        input_text = input_text.replace(')', '')  
+        input_text = input_text.replace('"', "")
+        input_text = input_text.replace("'", "")
+        input_text = input_text.replace("(", "")
+        input_text = input_text.replace(")", "")
 
         return video_tensor, input_text

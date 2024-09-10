@@ -6,7 +6,13 @@ from transformer_maskgit.optimizer import get_optimizer
 from transformers import BertTokenizer, BertModel
 
 from eval import evaluate_internal, plot_roc, accuracy, sigmoid, bootstrap, compute_cis
-from sklearn.metrics import classification_report, confusion_matrix, multilabel_confusion_matrix, f1_score, accuracy_score
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix,
+    multilabel_confusion_matrix,
+    f1_score,
+    accuracy_score,
+)
 
 
 import torch
@@ -50,7 +56,6 @@ def apply_softmax(array):
     return softmax_array
 
 
-
 def tensor_to_nifti(tensor, path, affine=np.eye(4)):
     """
     Save tensor as a NIfTI file.
@@ -68,34 +73,49 @@ def tensor_to_nifti(tensor, path, affine=np.eye(4)):
         if tensor.size(0) != 1:
             print("Warning: Saving only the first channel of the input tensor")
         tensor = tensor.squeeze(0)
-    tensor=tensor.swapaxes(0,2)
+    tensor = tensor.swapaxes(0, 2)
     numpy_data = tensor.detach().numpy().astype(np.float32)
     nifti_img = nib.Nifti1Image(numpy_data, affine)
     nib.save(nifti_img, path)
 
+
 def exists(val):
     return val is not None
 
+
 def noop(*args, **kwargs):
     pass
+
 
 def cycle(dl):
     while True:
         for data in dl:
             yield data
 
+
 def yes_or_no(question):
-    answer = input(f'{question} (y/n) ')
-    return answer.lower() in ('yes', 'y')
+    answer = input(f"{question} (y/n) ")
+    return answer.lower() in ("yes", "y")
+
 
 def accum_log(log, new_logs):
     for key, new_value in new_logs.items():
-        old_value = log.get(key, 0.)
+        old_value = log.get(key, 0.0)
         log[key] = old_value + new_value
     return log
 
+
 class CosineAnnealingWarmUpRestarts(lr_scheduler._LRScheduler):
-    def __init__(self, optimizer, T_0, T_mult=1, eta_max=0.1, T_warmup=10000, gamma=1.0, last_epoch=-1):
+    def __init__(
+        self,
+        optimizer,
+        T_0,
+        T_mult=1,
+        eta_max=0.1,
+        T_warmup=10000,
+        gamma=1.0,
+        last_epoch=-1,
+    ):
         self.T_0 = T_0
         self.T_mult = T_mult
         self.eta_max = eta_max
@@ -116,9 +136,10 @@ class CosineAnnealingWarmUpRestarts(lr_scheduler._LRScheduler):
             while self.T_cur >= T_i:
                 self.T_cur -= T_i
                 T_i *= self.T_mult
-                self.lr_min = self.eta_max * (self.gamma ** self.T_cur)
-            lr = self.lr_min + 0.5 * (self.eta_max - self.lr_min) * \
-                 (1 + math.cos(math.pi * self.T_cur / T_i))
+                self.lr_min = self.eta_max * (self.gamma**self.T_cur)
+            lr = self.lr_min + 0.5 * (self.eta_max - self.lr_min) * (
+                1 + math.cos(math.pi * self.T_cur / T_i)
+            )
 
         self.iteration += 1
         return [lr for _ in self.optimizer.param_groups]
@@ -131,7 +152,7 @@ class CosineAnnealingWarmUpRestarts(lr_scheduler._LRScheduler):
         self._update_T()
 
     def _update_lr(self):
-        self.optimizer.param_groups[0]['lr'] = self.get_lr()[0]
+        self.optimizer.param_groups[0]["lr"] = self.get_lr()[0]
 
     def _update_T(self):
         if self.T_cur == self.T_0:
@@ -141,6 +162,7 @@ class CosineAnnealingWarmUpRestarts(lr_scheduler._LRScheduler):
             self.T_0 *= self.T_mult
             self.eta_max *= self.gamma
 
+
 class CTClipTrainer(nn.Module):
     def __init__(
         self,
@@ -148,32 +170,36 @@ class CTClipTrainer(nn.Module):
         *,
         num_train_steps,
         batch_size,
-        data_train = "train",
-        data_valid = "valid",
-        reports_file_train = "data_reports.xslx",
-        reports_file_valid = "data_reports.xslx",
-        labels = "labels.csv",
-        tokenizer = None,
-        lr = 1.25e-6,
-        wd = 0.,
-        max_grad_norm = 0.5,
-        save_results_every = 1000,
-        save_model_every = 1000 ,
-        results_folder = '/shares/menze.dqbm.uzh/ihamam/ctclip/',
-        num_workers = 8,
-        accelerate_kwargs: dict = dict()
+        data_train="train",
+        data_valid="valid",
+        reports_file_train="data_reports.xslx",
+        reports_file_valid="data_reports.xslx",
+        labels="labels.csv",
+        tokenizer=None,
+        lr=1.25e-6,
+        wd=0.0,
+        max_grad_norm=0.5,
+        save_results_every=1000,
+        save_model_every=1000,
+        results_folder="/shares/menze.dqbm.uzh/ihamam/ctclip/",
+        num_workers=8,
+        accelerate_kwargs: dict = dict(),
     ):
         super().__init__()
         ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
         kwargs = InitProcessGroupKwargs(timeout=timedelta(seconds=36000))
-        self.accelerator = Accelerator(kwargs_handlers=[ddp_kwargs, kwargs], **accelerate_kwargs)
+        self.accelerator = Accelerator(
+            kwargs_handlers=[ddp_kwargs, kwargs], **accelerate_kwargs
+        )
         self.CTClip = CTClip
         if tokenizer != None:
-            self.tokenizer=tokenizer
+            self.tokenizer = tokenizer
         else:
-            self.tokenizer=BertTokenizer.from_pretrained('microsoft/BiomedVLP-CXR-BERT-specialized',do_lower_case=True)
+            self.tokenizer = BertTokenizer.from_pretrained(
+                "microsoft/BiomedVLP-CXR-BERT-specialized", do_lower_case=True
+            )
 
-        self.register_buffer('steps', torch.Tensor([0]))
+        self.register_buffer("steps", torch.Tensor([0]))
 
         self.num_train_steps = num_train_steps
         self.batch_size = batch_size
@@ -183,35 +209,36 @@ class CTClipTrainer(nn.Module):
         self.optim = get_optimizer(all_parameters, lr=lr, wd=wd)
 
         self.max_grad_norm = max_grad_norm
-        self.lr=lr
+        self.lr = lr
         # Load the pre-trained weights
         self.ds = CTReportDataset(data_folder=data_train, csv_file=reports_file_train)
 
-        self.valid_ds = CTReportDatasetinfer(data_folder=data_valid, csv_file=reports_file_valid, labels = labels)
-
+        self.valid_ds = CTReportDatasetinfer(
+            data_folder=data_valid, csv_file=reports_file_valid, labels=labels
+        )
 
         self.dl = DataLoader(
             self.ds,
             num_workers=num_workers,
             batch_size=self.batch_size,
-            shuffle = True,
+            shuffle=True,
         )
 
         self.valid_dl = DataLoader(
             self.valid_ds,
             num_workers=num_workers,
             batch_size=1,
-            shuffle = False,
+            shuffle=False,
         )
 
         # prepare with accelerator
-        self.dl_iter=cycle(self.dl)
-        self.valid_dl_iter=cycle(self.valid_dl)
+        self.dl_iter = cycle(self.dl)
+        self.valid_dl_iter = cycle(self.valid_dl)
         self.device = self.accelerator.device
         self.CTClip.to(self.device)
 
         (
- 			self.dl_iter,
+            self.dl_iter,
             self.valid_dl_iter,
             self.CTClip,
             self.optim,
@@ -227,12 +254,12 @@ class CTClipTrainer(nn.Module):
 
         self.results_folder = Path(results_folder)
 
-        if len([*self.results_folder.glob('**/*')]) > 0 and yes_or_no('do you want to clear previous experiment checkpoints and results?'):
+        if len([*self.results_folder.glob("**/*")]) > 0 and yes_or_no(
+            "do you want to clear previous experiment checkpoints and results?"
+        ):
             rmtree(str(self.results_folder))
 
         self.results_folder.mkdir(parents=True, exist_ok=True)
-
-
 
     def save(self, path):
         if not self.accelerator.is_local_main_process:
@@ -250,13 +277,12 @@ class CTClipTrainer(nn.Module):
         pkg = torch.load(path)
 
         CTClip = self.accelerator.unwrap_model(self.CTClip)
-        CTClip.load_state_dict(pkg['model'])
+        CTClip.load_state_dict(pkg["model"])
 
-        self.optim.load_state_dict(pkg['optim'])
+        self.optim.load_state_dict(pkg["optim"])
 
     def print(self, msg):
         self.accelerator.print(msg)
-
 
     @property
     def is_main(self):
@@ -275,27 +301,33 @@ class CTClipTrainer(nn.Module):
         # update CTClip model
         video, text = next(self.dl_iter)
         print(video.shape)
-        device=self.device
-        video=video.to(device)
+        device = self.device
+        video = video.to(device)
         mask = torch.ones((video.shape[0], video.shape[2])).bool().to(device)
-        #text = text.to(device)
+        # text = text.to(device)
         text = list(text)
-        text_tokens=self.tokenizer(text, return_tensors="pt", padding="max_length", truncation=True, max_length=512).to(device)
+        text_tokens = self.tokenizer(
+            text,
+            return_tensors="pt",
+            padding="max_length",
+            truncation=True,
+            max_length=512,
+        ).to(device)
 
-        #video = video
+        # video = video
         with self.accelerator.autocast():
             loss = self.CTClip(text_tokens, video, return_loss=True, device=device)
 
         self.accelerator.backward(loss)
-        accum_log(logs, {'loss': loss.item()})
+        accum_log(logs, {"loss": loss.item()})
         if exists(self.max_grad_norm):
-            self.accelerator.clip_grad_norm_(self.CTClip.parameters(), self.max_grad_norm)
+            self.accelerator.clip_grad_norm_(
+                self.CTClip.parameters(), self.max_grad_norm
+            )
 
         self.optim.step()
         self.optim.zero_grad()
         self.print(f"{steps}: loss: {logs['loss']}")
-
-
 
         if self.is_main and not (steps % self.save_results_every):
             with torch.no_grad():
@@ -304,84 +336,116 @@ class CTClipTrainer(nn.Module):
 
                 for model, filename in models_to_evaluate:
                     model.eval()
-                    predictedall=[]
-                    realall=[]
+                    predictedall = []
+                    realall = []
 
-                    #Fast inference on 100 images
+                    # Fast inference on 100 images
                     for i in range(100):
                         print("test")
-                        valid_data, text, onehotlabels, name_acc = next(self.valid_dl_iter)
+                        valid_data, text, onehotlabels, name_acc = next(
+                            self.valid_dl_iter
+                        )
                         valid_data = valid_data.to(device)
 
                         if "module" in model.__dict__:
                             model = model.module
 
-                        pathologies = ['Medical material','Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion','Coronary artery wall calcification', 'Hiatal hernia','Lymphadenopathy', 'Emphysema', 'Atelectasis', 'Lung nodule','Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion', 'Mosaic attenuation pattern','Peribronchial thickening', 'Consolidation', 'Bronchiectasis','Interlobular septal thickening']
-                        plotdir = str(self.results_folder / f'CTClip_{steps}' )
+                        pathologies = [
+                            "Medical material",
+                            "Arterial wall calcification",
+                            "Cardiomegaly",
+                            "Pericardial effusion",
+                            "Coronary artery wall calcification",
+                            "Hiatal hernia",
+                            "Lymphadenopathy",
+                            "Emphysema",
+                            "Atelectasis",
+                            "Lung nodule",
+                            "Lung opacity",
+                            "Pulmonary fibrotic sequela",
+                            "Pleural effusion",
+                            "Mosaic attenuation pattern",
+                            "Peribronchial thickening",
+                            "Consolidation",
+                            "Bronchiectasis",
+                            "Interlobular septal thickening",
+                        ]
+                        plotdir = str(self.results_folder / f"CTClip_{steps}")
                         plotdir = plotdir + "/"
 
                         Path(plotdir).mkdir(parents=True, exist_ok=True)
 
-                        predictedlabels=[]
+                        predictedlabels = []
                         for pathology in pathologies:
-                            text = [f"There is {pathology}.", f"There is no {pathology}."]
-                            text_tokens=self.tokenizer(
-                                            text, return_tensors="pt", padding="max_length", truncation=True, max_length=512).to(device)
-                            output = model(text_tokens, valid_data,  device=device)
-
+                            text = [
+                                f"There is {pathology}.",
+                                f"There is no {pathology}.",
+                            ]
+                            text_tokens = self.tokenizer(
+                                text,
+                                return_tensors="pt",
+                                padding="max_length",
+                                truncation=True,
+                                max_length=512,
+                            ).to(device)
+                            output = model(text_tokens, valid_data, device=device)
 
                             output = apply_softmax(output)
 
                             print(output)
-                            append_out=output.detach().cpu().numpy()
+                            append_out = output.detach().cpu().numpy()
                             print(output)
-                            if output[0]>output[1]:
+                            if output[0] > output[1]:
                                 predictedlabels.append(append_out[0])
                             else:
                                 predictedlabels.append(append_out[0])
                         predictedall.append(predictedlabels)
                         realall.append(onehotlabels.detach().cpu().numpy()[0])
                         # Print and save classification report
-                    realall=np.array(realall)
-                    predictedall=np.array(predictedall)
+                    realall = np.array(realall)
+                    predictedall = np.array(predictedall)
 
-                    dfs=evaluate_internal(predictedall,realall,pathologies, plotdir)
+                    dfs = evaluate_internal(predictedall, realall, pathologies, plotdir)
                     realall = np.rint(realall).astype(int)
                     predictedall = np.rint(predictedall).astype(int)
 
+                    print(
+                        "Test F1 Accuracy: ",
+                        f1_score(realall, predictedall, average="micro"),
+                    )
+                    print(
+                        "Test Flat Accuracy: ",
+                        accuracy_score(realall.flatten(), predictedall.flatten()),
+                        "\n",
+                    )
 
-                    print('Test F1 Accuracy: ', f1_score(realall, predictedall,average='micro'))
-                    print('Test Flat Accuracy: ', accuracy_score(realall.flatten(), predictedall.flatten()),'\n')
+                    writer = pd.ExcelWriter(
+                        f"{plotdir}aurocs.xlsx", engine="xlsxwriter"
+                    )
 
-                    writer = pd.ExcelWriter(f'{plotdir}aurocs.xlsx', engine='xlsxwriter')
-
-                    dfs.to_excel(writer, sheet_name='Sheet1', index=False)
+                    dfs.to_excel(writer, sheet_name="Sheet1", index=False)
 
                     writer.close()
-
 
         # save model every so often
 
         if self.is_main and not (steps % self.save_model_every):
             model_save = self.accelerator.unwrap_model(self.CTClip)
             state_dict = model_save.state_dict()
-            model_path = str(self.results_folder / f'CTClip.{steps}.pt')
+            model_path = str(self.results_folder / f"CTClip.{steps}.pt")
 
             self.accelerator.save(state_dict, model_path)
 
-
-            self.print(f'{steps}: saving model to {str(self.results_folder)}')
+            self.print(f"{steps}: saving model to {str(self.results_folder)}")
 
         self.steps += 1
         return logs
 
-
-
     def train(self, log_fn=noop):
         device = next(self.CTClip.parameters()).device
-        device=torch.device('cuda')
+        device = torch.device("cuda")
         while self.steps < self.num_train_steps:
             logs = self.train_step()
             log_fn(logs)
 
-        self.print('training complete')
+        self.print("training complete")

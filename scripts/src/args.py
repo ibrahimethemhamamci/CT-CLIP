@@ -3,12 +3,13 @@ import argparse
 
 import torch
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--data-location",
         type=str,
-        default=os.path.expanduser('~/data'),
+        default=os.path.expanduser("~/data"),
         help="The root directory for the datasets.",
     )
     parser.add_argument(
@@ -16,8 +17,8 @@ def parse_arguments():
         default=None,
         type=lambda x: x.split(","),
         help="Which datasets to use for evaluation. Split by comma, e.g. CIFAR101,CIFAR102."
-             " Note that same model used for all datasets, so much have same classnames"
-             "for zero shot.",
+        " Note that same model used for all datasets, so much have same classnames"
+        "for zero shot.",
     )
     parser.add_argument(
         "--train-dataset",
@@ -39,21 +40,21 @@ def parse_arguments():
     parser.add_argument(
         "--alpha",
         default=[0.5],
-        nargs='*',
+        nargs="*",
         type=float,
         help=(
-            'Interpolation coefficient for ensembling. '
-            'Users should specify N-1 values, where N is the number of '
-            'models being ensembled. The specified numbers should sum to '
-            'less than 1. Note that the order of these values matter, and '
-            'should be the same as the order of the classifiers being ensembled.'
-        )
+            "Interpolation coefficient for ensembling. "
+            "Users should specify N-1 values, where N is the number of "
+            "models being ensembled. The specified numbers should sum to "
+            "less than 1. Note that the order of these values matter, and "
+            "should be the same as the order of the classifiers being ensembled."
+        ),
     )
     parser.add_argument(
         "--exp_name",
         type=str,
         default=None,
-        help="Name of the experiment, for organization purposes only."
+        help="Name of the experiment, for organization purposes only.",
     )
     parser.add_argument(
         "--results-db",
@@ -72,24 +73,9 @@ def parse_arguments():
         type=int,
         default=128,
     )
-    parser.add_argument(
-        "--lr",
-        type=float,
-        default=0.001,
-        help="Learning rate."
-    )
-    parser.add_argument(
-        "--wd",
-        type=float,
-        default=0.1,
-        help="Weight decay"
-    )
-    parser.add_argument(
-        "--ls",
-        type=float,
-        default=0.0,
-        help="Label smoothing."
-    )
+    parser.add_argument("--lr", type=float, default=0.001, help="Learning rate.")
+    parser.add_argument("--wd", type=float, default=0.1, help="Weight decay")
+    parser.add_argument("--ls", type=float, default=0.0, help="Label smoothing.")
     parser.add_argument(
         "--warmup_length",
         type=int,
@@ -116,7 +102,7 @@ def parse_arguments():
         "--freeze-encoder",
         default=False,
         action="store_true",
-        help="Whether or not to freeze the image encoder. Only relevant for fine-tuning."
+        help="Whether or not to freeze the image encoder. Only relevant for fine-tuning.",
     )
     parser.add_argument(
         "--cache-dir",
@@ -125,46 +111,46 @@ def parse_arguments():
         help="Directory for caching features and encoder",
     )
     parser.add_argument(
-            "--print-every",
-            type=int,
-            default=100,
-            help="Number of iterations to print",
-   )
+        "--print-every",
+        type=int,
+        default=100,
+        help="Number of iterations to print",
+    )
     parser.add_argument(
-               "--save-every",
-               type=int,
-               default=1000,
-               help="Number of iterations to save",
-      )
+        "--save-every",
+        type=int,
+        default=1000,
+        help="Number of iterations to save",
+    )
     parser.add_argument(
-            "--pretrained",
-            type=str,
-            default=None,
-            help="Pretrained CT-CLIP model path",
-       )
+        "--pretrained",
+        type=str,
+        default=None,
+        help="Pretrained CT-CLIP model path",
+    )
 
     parser.add_argument(
-                "--data-folder",
-                type=str,
-                default=None,
-                help="Data folder path",
-           )
+        "--data-folder",
+        type=str,
+        default=None,
+        help="Data folder path",
+    )
     parser.add_argument(
-                    "--reports-file",
-                    type=str,
-                    default=None,
-                    help="Reports file path",
-               )
+        "--reports-file",
+        type=str,
+        default=None,
+        help="Reports file path",
+    )
     parser.add_argument(
-                        "--labels",
-                        type=str,
-                        default=None,
-                        help="Labels path",)
-
+        "--labels",
+        type=str,
+        default=None,
+        help="Labels path",
+    )
 
     parsed_args = parser.parse_args()
     parsed_args.device = "cuda" if torch.cuda.is_available() else "cpu"
-    
+
     if parsed_args.load is not None and len(parsed_args.load) == 1:
         parsed_args.load = parsed_args.load[0]
     return parsed_args
