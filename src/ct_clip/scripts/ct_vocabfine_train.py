@@ -19,7 +19,7 @@ def get_lr(optimizer):
         return param_group["lr"]
 
 
-def finetune(args):
+def main(args):
     # Initialize BERT tokenizer and text encoder
     tokenizer = BertTokenizer.from_pretrained(
         "microsoft/BiomedVLP-CXR-BERT-specialized", do_lower_case=True
@@ -204,8 +204,3 @@ def finetune(args):
 
     if args.save is not None:
         return model_path
-
-
-if __name__ == "__main__":
-    args = parse_arguments()
-    finetune(args)
