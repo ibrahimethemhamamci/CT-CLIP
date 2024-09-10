@@ -1,3 +1,4 @@
+import copy
 import functools
 from contextlib import nullcontext
 from functools import partial
@@ -13,6 +14,7 @@ from einops.layers.torch import Rearrange
 from torch import nn
 
 from attention import Transformer, ContinuousPositionBias
+from ct_clip.types import Device
 from ctvit import CTViT
 from t5 import t5_encode_text, get_encoded_dim, DEFAULT_T5_NAME
 
@@ -38,6 +40,17 @@ def reduce_mult(arr):
 
 def divisible_by(numer, denom):
     return (numer % denom) == 0
+
+
+def copy_for_eval(ctvit, device: Device = None):
+    vae_copy = copy.deepcopy(ctvit.cpu())
+
+    if vae_copy.use_vgg_and_gan:
+        del vae_copy.discr
+        del vae_copy.vgg
+
+    vae_copy.eval()
+    return vae_copy.to(device)
 
 
 # tensor helpers
@@ -371,10 +384,11 @@ class MaskGITTransformer(nn.Module):
         critic_loss_weight=1.0,
         critic_noise_anneal_schedule="decay",
         critic_train_sample_temperature=1.0,
+        device: Device = torch.device("cpu"),
     ):
         super().__init__()
 
-        self.ctvit = ctvit.copy_for_eval()
+        self.ctvit = copy_for_eval(ctvit, device)
 
         self.maskgit = maskgit
         self.unconditional = maskgit.unconditional
@@ -596,7 +610,7 @@ class MaskGITTransformer(nn.Module):
         if has_prime:
             video_token_ids = torch.cat((prime_token_ids, video_token_ids), dim=-1)
 
-        video = self.ctvit.decode_from_codebook_indices(video_token_ids)
+        video = self.ctvit.decode_from_codebook_indices(video_token_ids, device)
 
         if has_prime:
             video = video[:, :, prime_num_frames:]

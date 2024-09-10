@@ -6,12 +6,13 @@ import torch
 import torch.nn.functional as F
 from einops import rearrange, repeat, pack, unpack
 from einops.layers.torch import Rearrange
-from torch import nn
+from torch import nn, Tensor
 from torch.autograd import grad as torch_grad
 from torchvision import transforms as T
 from vector_quantize_pytorch import VectorQuantize
 
 from attention import Transformer, ContinuousPositionBias
+from ct_clip.types import Device
 
 
 # helpers
@@ -61,9 +62,8 @@ def cast_tuple(val, l=1):
     return val if isinstance(val, tuple) else (val,) * l
 
 
-def gradient_penalty(images, output, weight=10):
+def gradient_penalty(images, output, weight=10, device: Device = None):
     batch_size = images.shape[0]
-    device = torch.device("cuda")
     gradients = torch_grad(
         outputs=output,
         inputs=images,
@@ -123,7 +123,6 @@ def grad_layer_wrt_loss(loss, layer):
 def pick_video_frame(video, frame_indices):
     batch, device = video.shape[0], video.device
     video = rearrange(video, "b c f ... -> b f c ...")
-    device = torch.device("cuda")
     batch_indices = torch.arange(batch, device=device)
     batch_indices = rearrange(batch_indices, "b -> b 1")
     images = video[batch_indices, frame_indices]
@@ -296,18 +295,6 @@ class CTViT(nn.Module):
             total_tokens + int(num_frames / self.temporal_patch_size) * image_num_tokens
         )
 
-    def copy_for_eval(self):
-        device = next(self.parameters()).device
-        device = torch.device("cuda")
-        vae_copy = copy.deepcopy(self.cpu())
-
-        if vae_copy.use_vgg_and_gan:
-            del vae_copy.discr
-            del vae_copy.vgg
-
-        vae_copy.eval()
-        return vae_copy.to(device)
-
     # @remove_vgg
     def state_dict(self, *args, **kwargs):
         return super().state_dict(*args, **kwargs)
@@ -322,9 +309,9 @@ class CTViT(nn.Module):
         pt = torch.load(str(path))
         self.load_state_dict(pt)
 
-    def decode_from_codebook_indices(self, indices):
+    def decode_from_codebook_indices(self, indices, device: Device = None):
         codes = self.vq.codebook[indices]
-        return self.decode(codes)
+        return self.decode(codes, device=device)
 
     @property
     def patch_height_width(self):
@@ -333,14 +320,13 @@ class CTViT(nn.Module):
             self.image_size[1] // self.patch_size[1],
         )
 
-    def encode(self, tokens):
+    def encode(self, tokens: Tensor, device: Device = None) -> Tensor:
         b = tokens.shape[0]
         h, w = self.patch_height_width
 
         video_shape = tuple(tokens.shape[:-1])
 
         tokens = rearrange(tokens, "b t h w d -> (b t) (h w) d")
-        device = torch.device("cuda")
         attn_bias = self.spatial_rel_pos_bias(h, w, device=device)
 
         tokens = self.enc_spatial_transformer(
@@ -359,7 +345,7 @@ class CTViT(nn.Module):
 
         return tokens
 
-    def decode(self, tokens):
+    def decode(self, tokens, device: Device = None) -> Tensor:
         b = tokens.shape[0]
         h, w = self.patch_height_width
 
@@ -379,7 +365,6 @@ class CTViT(nn.Module):
         # decode - spatial
 
         tokens = rearrange(tokens, "b t h w d -> (b t) (h w) d")
-        device = torch.device("cuda")
         attn_bias = self.spatial_rel_pos_bias(h, w, device=device)
 
         tokens = self.dec_spatial_transformer(
@@ -423,7 +408,6 @@ class CTViT(nn.Module):
             assert not exists(mask)
 
         b, c, f, *image_dims, device = *video.shape, video.device
-        device = torch.device("cuda")
         assert tuple(image_dims) == self.image_size
         assert not exists(mask) or mask.shape[-1] == f
 
@@ -442,7 +426,7 @@ class CTViT(nn.Module):
 
         # encode - spatial
 
-        tokens = self.encode(tokens)
+        tokens = self.encode(tokens, device)
 
         # quantize
 
@@ -463,7 +447,7 @@ class CTViT(nn.Module):
         if return_encoded_tokens:
             return tokens
 
-        recon_video = self.decode(tokens)
+        recon_video = self.decode(tokens, device)
 
         returned_recon = (
             rearrange(recon_video, "b c 1 h w -> b c h w")

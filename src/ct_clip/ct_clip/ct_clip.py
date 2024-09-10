@@ -10,6 +10,7 @@ from einops.layers.torch import Rearrange, Reduce
 from torch import nn, einsum
 from torch.utils.checkpoint import checkpoint
 
+from ct_clip.types import Device
 from mlm import MLM
 from visual_ssl import SimSiam, SimCLR
 
@@ -657,10 +658,10 @@ class CTCLIP(nn.Module):
     def load_state_dict(self, *args, **kwargs):
         return super().load_state_dict(*args, **kwargs)
 
-    def load(self, path):
+    def load(self, path, device: Device = None):
         path = Path(path)
         assert path.exists()
-        pt = torch.load(str(path))
+        pt = torch.load(str(path), map_location=device)
         self.load_state_dict(pt)
 
     def forward(
