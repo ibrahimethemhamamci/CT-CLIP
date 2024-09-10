@@ -1,9 +1,8 @@
-import torch
-from ct_clip.transformer_maskgit import CTViT
 from transformers import BertTokenizer, BertModel
+
 from ct_clip.ct_clip import CTCLIP
+from ct_clip.transformer_maskgit import CTViT
 from zero_shot import CTClipInference
-import accelerate
 
 tokenizer = BertTokenizer.from_pretrained(
     "microsoft/BiomedVLP-CXR-BERT-specialized", do_lower_case=True

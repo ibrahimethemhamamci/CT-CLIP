@@ -1,8 +1,8 @@
 import torch
-from torch.autograd import Function
 import torch.distributed as distributed
-
 from einops import rearrange
+from torch.autograd import Function
+
 
 # distributed helpers
 

@@ -1,23 +1,18 @@
-from pathlib import Path
 import copy
-import math
 from functools import wraps
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F
-from torch import nn, einsum
-from torch.autograd import grad as torch_grad
-from torchvision import transforms as T, utils
-
-
-import torchvision
-
 from einops import rearrange, repeat, pack, unpack
 from einops.layers.torch import Rearrange
-
+from torch import nn
+from torch.autograd import grad as torch_grad
+from torchvision import transforms as T
 from vector_quantize_pytorch import VectorQuantize
 
-from attention import Attention, Transformer, ContinuousPositionBias
+from attention import Transformer, ContinuousPositionBias
+
 
 # helpers
 

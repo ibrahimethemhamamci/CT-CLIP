@@ -1,16 +1,17 @@
+from pathlib import Path
+
+import math
 import numpy as np
 import pandas as pd
 import torch
 import tqdm
-from pathlib import Path
 from sklearn.metrics import (
     confusion_matrix,
     precision_score,
-    recall_score,
     f1_score,
     accuracy_score,
 )
-import math
+
 from eval import evaluate_internal
 
 

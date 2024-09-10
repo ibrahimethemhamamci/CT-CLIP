@@ -1,37 +1,16 @@
-import subprocess
-import numpy as np
-import os
-import pandas as pd
-from PIL import Image
-import h5py
-import matplotlib.pyplot as plt
-from typing import List, Callable
-
-import torch
-from torch.utils import data
-from tqdm.notebook import tqdm
-import torch.nn as nn
-from torchvision.transforms import Compose, Normalize, Resize
-
-import sklearn
-from sklearn.metrics import (
-    matthews_corrcoef,
-    confusion_matrix,
-    accuracy_score,
-    auc,
-    roc_auc_score,
-    roc_curve,
-    classification_report,
-)
-from sklearn.metrics import precision_recall_curve, f1_score
-from sklearn.metrics import average_precision_score
-from sklearn.utils import resample
-import seaborn as sns
-
-import scipy
-import scipy.stats
-
 import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.metrics import (
+    auc,
+    roc_curve,
+)
+from sklearn.metrics import precision_recall_curve
+from sklearn.utils import resample
+from tqdm.notebook import tqdm
 
 sys.path.append("../..")
 

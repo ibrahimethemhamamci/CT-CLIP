@@ -2,21 +2,19 @@
 # to give users a quick easy start to training DALL-E without doing BPE
 
 
-import os
 import html
+import os
 from functools import lru_cache
 from pathlib import Path
 
-import regex as re
 import ftfy
-
+import regex as re
 import torch
 import torch.nn.functional as F
-
 from beartype import beartype
-from beartype.typing import Optional, Union, List
-
+from beartype.typing import Union, List
 from torch.nn.utils.rnn import pad_sequence
+
 
 # OpenAI simple tokenizer
 

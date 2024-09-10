@@ -1,24 +1,19 @@
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from src.args import parse_arguments
-from transformers import BertTokenizer, BertModel
-from ct_clip.transformer_maskgit import CTViT
-from ct_clip.ct_clip import CTCLIP
-from data_inference import CTReportDatasetinfer
-from eval import evaluate_internal, plot_roc, accuracy, sigmoid, bootstrap, compute_cis
-import tqdm
+import copy
+import os
+
 import numpy as np
 import pandas as pd
-from sklearn.metrics import (
-    classification_report,
-    confusion_matrix,
-    multilabel_confusion_matrix,
-    f1_score,
-    accuracy_score,
-)
-import os
-import copy
+import torch
+import torch.nn as nn
+import tqdm
+from torch.utils.data import DataLoader
+from transformers import BertTokenizer, BertModel
+
+from ct_clip.ct_clip import CTCLIP
+from ct_clip.transformer_maskgit import CTViT
+from data_inference import CTReportDatasetinfer
+from eval import evaluate_internal, sigmoid
+from src.args import parse_arguments
 
 
 def sigmoid(tensor):

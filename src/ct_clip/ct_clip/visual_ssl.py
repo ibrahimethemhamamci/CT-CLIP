@@ -1,13 +1,12 @@
-import copy
 import random
 from functools import wraps
 
 import torch
-from torch import nn
 import torch.nn.functional as F
-
-from torchvision import transforms as T
 from einops import rearrange
+from torch import nn
+from torchvision import transforms as T
+
 
 # augmentations
 

@@ -5,7 +5,7 @@ It introduces modifications to the patch embeddings of the CT-ViT model and enab
 return of embedded layers for utilization in CT-CLIP.
 """
 
-from ctvit import CTViT
 from MaskGITTransformer import MaskGITTransformer, MaskGit, TokenCritic, make_video
-from videotextdataset import VideoTextDataset
+from ctvit import CTViT
 from ctvit_trainer import CTViTTrainer
+from videotextdataset import VideoTextDataset

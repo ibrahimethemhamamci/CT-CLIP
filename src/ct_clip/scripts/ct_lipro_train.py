@@ -1,16 +1,15 @@
 import os
 import time
+
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-from data_inference import CTReportDatasetinfer
-
-from ct_clip.transformer_maskgit import CTViT
-from transformers import BertTokenizer, BertModel
-from ct_clip.ct_clip import CTCLIP
-
 import tqdm
+from torch.utils.data import DataLoader
+from transformers import BertTokenizer, BertModel
 
+from ct_clip.ct_clip import CTCLIP
+from ct_clip.transformer_maskgit import CTViT
+from data_inference import CTReportDatasetinfer
 from src.args import parse_arguments
 from src.models.utils import cosine_lr
 

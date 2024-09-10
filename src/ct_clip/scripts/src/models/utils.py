@@ -1,11 +1,8 @@
 import os
-
-import torch
 import pickle
-from tqdm import tqdm
-import math
 
 import numpy as np
+import torch
 
 
 def assign_learning_rate(param_group, new_lr):

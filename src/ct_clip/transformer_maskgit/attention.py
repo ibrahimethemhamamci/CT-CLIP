@@ -1,12 +1,12 @@
+from typing import Tuple
+
 import math
 import torch
 import torch.nn.functional as F
+from beartype import beartype
+from einops import rearrange, repeat
 from torch import nn, einsum
 
-from beartype import beartype
-from typing import Tuple
-
-from einops import rearrange, repeat
 
 # helpers
 

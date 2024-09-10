@@ -1,4 +1,3 @@
-import math
 import copy
 from contextlib import contextmanager
 from functools import partial, wraps
@@ -6,13 +5,14 @@ from pathlib import Path
 
 import torch
 import torch.nn.functional as F
-from torch import nn, einsum
-from torch.utils.checkpoint import checkpoint
 from einops import rearrange, repeat, reduce
 from einops.layers.torch import Rearrange, Reduce
+from torch import nn, einsum
+from torch.utils.checkpoint import checkpoint
 
 from mlm import MLM
 from visual_ssl import SimSiam, SimCLR
+
 
 # helper functions
 

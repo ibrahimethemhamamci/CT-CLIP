@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import tqdm
-import numpy as np
 from sklearn.manifold import TSNE  # Import TSNE from sklearn.manifold
 
 

@@ -1,23 +1,21 @@
-from pathlib import Path
-import math
 import functools
 from contextlib import nullcontext
-from functools import partial, wraps
-
+from functools import partial
+from pathlib import Path
 from typing import Optional, List, Union
-from beartype import beartype
 
+import math
 import torch
 import torch.nn.functional as F
-from torch import nn, einsum
-
-from einops import rearrange, repeat, pack, unpack
+from beartype import beartype
+from einops import rearrange, pack, unpack
 from einops.layers.torch import Rearrange
+from torch import nn
 
+from attention import Transformer, ContinuousPositionBias
+from ctvit import CTViT
 from t5 import t5_encode_text, get_encoded_dim, DEFAULT_T5_NAME
 
-from ctvit import CTViT
-from attention import Attention, Transformer, ContinuousPositionBias
 
 # helpers
 

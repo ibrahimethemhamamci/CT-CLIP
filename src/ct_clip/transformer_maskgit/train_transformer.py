@@ -1,24 +1,18 @@
 from pathlib import Path
 from shutil import rmtree
-from optimizer import get_optimizer
 
+import math
 import torch
-from torch import nn
-from torch.utils.data import Dataset, DataLoader, random_split
-from torch.utils.data.distributed import DistributedSampler
-
-from ctvit import CTViT
-from MaskGITTransformer import MaskGit, MaskGITTransformer
-from videotextdataset import VideoTextDataset
-
-from data import tensor_to_nifti
-
-from einops import rearrange
-import accelerate
+import torch.optim.lr_scheduler as lr_scheduler
 from accelerate import Accelerator
 from accelerate import DistributedDataParallelKwargs
-import math
-import torch.optim.lr_scheduler as lr_scheduler
+from torch import nn
+from torch.utils.data import DataLoader, random_split
+
+from MaskGITTransformer import MaskGITTransformer
+from data import tensor_to_nifti
+from optimizer import get_optimizer
+from videotextdataset import VideoTextDataset
 
 
 # helpers

@@ -1,9 +1,9 @@
 import torch
-import copy
-
-# import clip.clip as clip
 
 import utils
+
+
+# import clip.clip as clip
 
 
 class ImageEncoder(torch.nn.Module):

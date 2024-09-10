@@ -1,43 +1,28 @@
+from datetime import timedelta
 from pathlib import Path
 from shutil import rmtree
-from datetime import timedelta
 
-from ct_clip.transformer_maskgit.optimizer import get_optimizer
-from transformers import BertTokenizer, BertModel
-
-from eval import evaluate_internal, plot_roc, accuracy, sigmoid, bootstrap, compute_cis
-from sklearn.metrics import (
-    classification_report,
-    confusion_matrix,
-    multilabel_confusion_matrix,
-    f1_score,
-    accuracy_score,
-)
-
-
-import torch
-from torch import nn
-from torch.utils.data import Dataset, DataLoader, random_split
-from torch.utils.data.distributed import DistributedSampler
-
-from data import CTReportDataset
-from data_inference import CTReportDatasetinfer
-
+import math
 import numpy as np
 import pandas as pd
-import tqdm
-
-
-from einops import rearrange
-import accelerate
+import torch
+import torch.optim.lr_scheduler as lr_scheduler
 from accelerate import Accelerator
 from accelerate import DistributedDataParallelKwargs
 from accelerate.utils import InitProcessGroupKwargs
+from sklearn.metrics import (
+    f1_score,
+    accuracy_score,
+)
+from torch import nn
+from torch.utils.data import DataLoader
+from transformers import BertTokenizer
 
-import math
-import torch.optim.lr_scheduler as lr_scheduler
-from ct_clip import CTCLIP
-import os
+from ct_clip.ct_clip import CTCLIP
+from ct_clip.transformer_maskgit.optimizer import get_optimizer
+from data import CTReportDataset
+from data_inference import CTReportDatasetinfer
+from eval import evaluate_internal
 
 
 # helpers

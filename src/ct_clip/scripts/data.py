@@ -1,16 +1,13 @@
-import os
 import glob
-import json
-import torch
-import pandas as pd
-import numpy as np
-from PIL import Image
-from torch.utils.data import Dataset
-import torchvision.transforms as transforms
+import os
 from functools import partial
-import torch.nn.functional as F
-import nibabel as nib
+
+import numpy as np
+import pandas as pd
+import torch
+import torchvision.transforms as transforms
 import tqdm
+from torch.utils.data import Dataset
 
 
 class CTReportDataset(Dataset):

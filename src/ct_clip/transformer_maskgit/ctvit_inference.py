@@ -1,28 +1,19 @@
-from math import sqrt
-from random import choice
 from pathlib import Path
 from shutil import rmtree
-import tqdm
-from beartype import beartype
+
 import nibabel as nib
 import torch
-from torch import nn
-from torch.utils.data import Dataset, DataLoader, random_split
-
-import torchvision.transforms as T
-from torchvision.datasets import ImageFolder
-from torchvision.utils import make_grid, save_image
-
-from einops import rearrange
-
-from optimizer import get_optimizer
-
+import tqdm
+from accelerate import Accelerator
+from beartype import beartype
 from ema_pytorch import EMA
+from torch import nn
+from torch.utils.data import DataLoader, random_split
 
 from ctvit import CTViT
 from data import ImageDataset, VideoDataset, tensor_to_nifti
+from optimizer import get_optimizer
 
-from accelerate import Accelerator
 
 # helpers
 
