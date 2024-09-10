@@ -9,7 +9,6 @@ from transformers import BertTokenizer, BertModel
 
 from ct_clip import CTCLIP, CTViT
 from data_inference import CTReportDatasetinfer
-from src.args import parse_arguments
 from src.models.utils import cosine_lr
 
 
@@ -40,7 +39,7 @@ class ImageLatentsClassifier(nn.Module):
         self.load_state_dict(loaded_state_dict)
 
 
-def finetune(args):
+def main(args):
     # Initialize BERT tokenizer and text encoder
     tokenizer = BertTokenizer.from_pretrained(
         "microsoft/BiomedVLP-CXR-BERT-specialized", do_lower_case=True
@@ -194,10 +193,3 @@ def finetune(args):
 
             # Save the optimizer state
             torch.save(optimizer.state_dict(), optim_path)
-
-
-if __name__ == "__main__":
-    # Parse command-line arguments
-    args = parse_arguments()
-    # Start fine-tuning process
-    finetune(args)
