@@ -295,7 +295,7 @@ class CTClipInference(nn.Module):
                             ).to(device)
 
                             output = model(
-                                text_tokens, valid_data.cuda(), device=device
+                                text_tokens, valid_data.to(device), device=device
                             )
 
                             output = apply_softmax(output)
