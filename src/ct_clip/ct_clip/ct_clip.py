@@ -626,12 +626,6 @@ class CTCLIP(nn.Module):
 
         self.multiview_loss_weight = multiview_loss_weight
 
-    def state_dict(self, *args, **kwargs):
-        return super().state_dict(*args, **kwargs)
-
-    def load_state_dict(self, *args, **kwargs):
-        return super().load_state_dict(*args, **kwargs)
-
     def load(self, path, device: Device = None):
         path = Path(path)
         assert path.exists()
