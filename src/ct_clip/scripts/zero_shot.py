@@ -156,7 +156,6 @@ class CTClipInference(nn.Module):
         )
         self.CTClip = CTClip
         self.tokenizer = tokenizer
-        self.results_folder = results_folder
         self.register_buffer("steps", torch.Tensor([0]))
 
         self.num_train_steps = num_train_steps
@@ -200,9 +199,8 @@ class CTClipInference(nn.Module):
 
         self.save_model_every = save_model_every
         self.save_results_every = save_results_every
-        self.result_folder_txt = self.results_folder
-        self.results_folder = Path(results_folder)
 
+        self.results_folder = Path(results_folder)
         self.results_folder.mkdir(parents=True, exist_ok=True)
 
     def save(self, path):
@@ -250,9 +248,6 @@ class CTClipInference(nn.Module):
                     for _ in tqdm.tqdm(range(len(self.ds))):
                         valid_data, text, onehotlabels, acc_name = next(self.dl_iter)
 
-                        plotdir = self.result_folder_txt
-                        Path(plotdir).mkdir(parents=True, exist_ok=True)
-
                         text_tokens = self.tokenizer(
                             text,
                             return_tensors="pt",
@@ -270,11 +265,11 @@ class CTClipInference(nn.Module):
 
                         filename = acc_name[0].split(".")[0]
                         np.save(
-                            f"{plotdir}{filename}.image.npy",
+                            self.results_folder / f"{filename}.image.npy",
                             output[1].detach().cpu().numpy(),
                         )
                         np.save(
-                            f"{plotdir}{filename}.text.npy",
+                            self.results_folder / f"{filename}.text.npy",
                             output[0].detach().cpu().numpy(),
                         )
 
