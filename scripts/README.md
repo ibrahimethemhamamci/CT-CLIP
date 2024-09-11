@@ -65,13 +65,6 @@ To facilitate comprehensive analysis, inference scripts are designed to store ou
 
 As CT-VocabFine is an open-vocabulary fine-tuning method, the inference of CT-VocabFine is same as inference of zero-shot CT-CLIP.
 
-### Inference of CT-CLIP and CT-VocabFine
-
-For inference of CT-CLIP and CT-VocabFine models, adjust the path for the model script either for CT-CLIP or CT-VocabFine, adjust the parameters `data_folder`, `reports_file`, and `labels` in the "run_zero_shot.py" script to correspond to the appropriate paths for the downloaded and preprocessed validation folder. Then, execute the training script with the following command:
-
-```bash
-$ python run_zero_shot.py
-```
 ### Inference of CT-LiPro
 
 For inference of CT-LiPro, utilize the following script with accurate paths:
@@ -88,17 +81,6 @@ $ python ct_lipro_inference.py \
     --reports-file path_to_valid_reports_csv \
     --labels path_to_valid_labels_csv
 ```
-
-## Bootstrapping and Calculating Classification Metrics
-
-Following model inference, please ensure to update the path in `bootstrap_values.py` to reflect the correct inference output folder by modifying the `data_dir` variable. Then execute the following command:
-
-```bash
-$ python run_zero_shot.py
-```
-
-This command initiates bootstrapping with 1000 samples and computes classification scores for each pathology across various bootstrap iterations. Subsequently, the results are saved into CSV files within the designated directory.
-
 
 ## Volume-to-Volume and Report-to-Volume Retrieval
 
