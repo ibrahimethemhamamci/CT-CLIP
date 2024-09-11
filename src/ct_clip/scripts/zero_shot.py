@@ -10,7 +10,7 @@ from accelerate import Accelerator
 from accelerate import DistributedDataParallelKwargs
 from torch import nn
 from torch.utils.data import DataLoader
-from transformers import BertTokenizer
+from transformers import BertTokenizer, PreTrainedTokenizer
 
 from ct_clip import CTCLIP, get_optimizer
 from ct_clip.helpers import noop, cycle
@@ -132,6 +132,7 @@ class CTClipInference(nn.Module):
     def __init__(
         self,
         CTClip: CTCLIP,
+        tokenizer: PreTrainedTokenizer,
         path_to_pretrained_model: str,
         *,
         num_train_steps,
@@ -154,9 +155,7 @@ class CTClipInference(nn.Module):
             kwargs_handlers=[ddp_kwargs], **accelerate_kwargs
         )
         self.CTClip = CTClip
-        self.tokenizer = BertTokenizer.from_pretrained(
-            "microsoft/BiomedVLP-CXR-BERT-specialized", do_lower_case=True
-        )
+        self.tokenizer = tokenizer
         self.results_folder = results_folder
         self.register_buffer("steps", torch.Tensor([0]))
 
