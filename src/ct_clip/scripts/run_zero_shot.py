@@ -11,6 +11,7 @@ def main(
     path_to_preprocessed_validation_folder: str,
     path_to_validation_reports_csv: str,
     path_to_validation_labels_csv: str,
+    path_to_results_folder: str,
 ):
     tokenizer = BertTokenizer.from_pretrained(
         "microsoft/BiomedVLP-CXR-BERT-specialized", do_lower_case=True
@@ -45,12 +46,13 @@ def main(
 
     inference = CTClipInference(
         clip,
+        tokenizer,
         path_to_pretrained_model=path_to_pretrained_model,
         data_folder=path_to_preprocessed_validation_folder,
         reports_file=path_to_validation_reports_csv,
         labels=path_to_validation_labels_csv,
         batch_size=1,
-        results_folder="inference_zeroshot/",
+        results_folder=path_to_results_folder,
         num_train_steps=1,
     )
 
@@ -75,6 +77,10 @@ def parse_args() -> argparse.Namespace:
         "--validation-labels-csv",
         help="Path to validation labels csv",
     )
+    parser.add_argument(
+        "--results-folder",
+        help="Path to results folder",
+    )
     return parser.parse_args()
 
 
@@ -85,6 +91,7 @@ def main_cli():
         args.preprocessed_validation_folder,
         args.validation_reports_csv,
         args.validation_labels_csv,
+        args.results_folder,
     )
 
 
