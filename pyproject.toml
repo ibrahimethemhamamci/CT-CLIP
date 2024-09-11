@@ -45,7 +45,7 @@ dependencies = [
     "torchtyping",
     "torchvision",
     "tqdm",
-    "transformers>=4.30.1",
+    "transformers==4.30.1",
     "vector-quantize-pytorch==1.1.2",
     "wilds",
     "XlsxWriter",
