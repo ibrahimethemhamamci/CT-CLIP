@@ -81,7 +81,11 @@ class PEG(nn.Module):
         x = F.pad(x, (1, 1, 1, 1, *frame_padding), value=0.0)
         # Conv3D is not supported on MPS for PyTorch < 2.3.0
         device = x.device
-        x = self.dsconv(x.to("cpu")).to(device) if device == MPS else self.dsconv(x)
+        x = (
+            self.dsconv(x.to("cpu")).to(device)
+            if device.type == MPS.type
+            else self.dsconv(x)
+        )
 
         x = rearrange(x, "b d ... -> b ... d")
 
