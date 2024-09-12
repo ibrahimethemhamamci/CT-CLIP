@@ -9,6 +9,7 @@ from einops import rearrange, repeat, reduce
 from einops.layers.torch import Rearrange, Reduce
 from torch import nn, einsum
 from torch.utils.checkpoint import checkpoint
+from transformers import BatchEncoding
 
 from ct_clip.helpers import cast_tuple, exists, identity, l2norm, log
 from ct_clip.types import Device
@@ -634,9 +635,9 @@ class CTCLIP(nn.Module):
 
     def forward(
         self,
-        text,
-        image,
-        device,
+        text: BatchEncoding = None,
+        image: torch.Tensor = None,
+        device: Device = None,
         return_loss=False,
         return_encodings=False,
         return_latents=False,
@@ -646,11 +647,13 @@ class CTCLIP(nn.Module):
         aug_text=None,  # augmented text (for multiview)
         aug_image=None,  # augmented image (for multiview)
     ):
-        b, device = text.input_ids.shape[0], device
 
         # derive text mask
+        empty_tensor = torch.tensor([])
+        text_mask = text.attention_mask if text is not None else empty_tensor
+        input_ids = text.input_ids if text is not None else empty_tensor
 
-        text_mask = text.attention_mask
+        image = image if image is not None else empty_tensor
 
         # ssl
 
@@ -663,9 +666,7 @@ class CTCLIP(nn.Module):
             # print(text.attention_mask.shape)
             # print("------------")
             text_ssl_loss = (
-                self.mlm(text.input_ids, attention_mask=text.attention_mask)
-                if self.use_mlm
-                else 0
+                self.mlm(input_ids, attention_mask=text_mask) if self.use_mlm else 0
             )
             image_ssl_loss = self.visual_ssl(image) if self.use_visual_ssl else 0
 
@@ -673,26 +674,26 @@ class CTCLIP(nn.Module):
 
         num_batch_texts = num_batch_images = 1
 
-        if exists(aug_text):
-            aug_text = cast_tuple(aug_text)
-            assert all(map(lambda t: t.shape == text.shape, aug_text))
-            num_batch_texts = len(aug_text) + 1
-
-            aug_text = torch.cat(aug_text, dim=0)
-
-            aug_text_mask = aug_text != self.text_pad_id
-
-            text_mask = torch.cat((text_mask, aug_text_mask), dim=0)
-            text = torch.cat((text, aug_text), dim=0)
-
-        if exists(aug_image):
-            aug_image = cast_tuple(aug_image)
-            assert all(map(lambda i: i.shape == image.shape, aug_image))
-            num_batch_images = len(aug_image) + 1
-
-            aug_image = torch.cat(aug_image, dim=0)
-
-            image = torch.cat((image, aug_image), dim=0)
+        # if exists(aug_text):
+        #     aug_text = cast_tuple(aug_text)
+        #     assert all(map(lambda t: t.shape == text.shape, aug_text))
+        #     num_batch_texts = len(aug_text) + 1
+        #
+        #     aug_text = torch.cat(aug_text, dim=0)
+        #
+        #     aug_text_mask = aug_text != self.text_pad_id
+        #
+        #     text_mask = torch.cat((text_mask, aug_text_mask), dim=0)
+        #     text = torch.cat((text, aug_text), dim=0)
+        #
+        # if exists(aug_image):
+        #     aug_image = cast_tuple(aug_image)
+        #     assert all(map(lambda i: i.shape == image.shape, aug_image))
+        #     num_batch_images = len(aug_image) + 1
+        #
+        #     aug_image = torch.cat(aug_image, dim=0)
+        #
+        #     image = torch.cat((image, aug_image), dim=0)
 
         is_multiview = num_batch_texts > 1 or num_batch_images > 1
         # assert not (return_loss and not self.training), 'loss cannot be used if not training'
@@ -712,14 +713,13 @@ class CTCLIP(nn.Module):
 
         print(text.input_ids.shape)
 
-        text_embeddings = self.text_transformer(
-            text.input_ids, attention_mask=text.attention_mask
-        )
+        text_embeddings = self.text_transformer(input_ids, attention_mask=text_mask)
         enc_text = text_embeddings[0]
         print(enc_text.shape)
 
         # depending on whether text is using causal mask, post process, moving eos token to the first position
 
+        b = text.input_ids.shape[0]
         if self.text_causal_mask:
             eos_text_mask = text == self.text_eos_id
             assert torch.all(
@@ -751,7 +751,13 @@ class CTCLIP(nn.Module):
             freeze = freeze_image_encoder
         )"""
 
-        enc_image = self.visual_transformer(image, return_encoded_tokens=True)
+        enc_image = (
+            self.visual_transformer(image, return_encoded_tokens=True)
+            if image is not empty_tensor
+            else torch.empty(
+                (1, 1, 1, self.dim_image)
+            )  # 4D so enc_image.shape[3] works
+        )
 
         # print("This is visual encoding")
         print(enc_image.shape)
@@ -818,7 +824,6 @@ class CTCLIP(nn.Module):
                     text_latents_extra,
                     image_latents_extra,
                 )
-
             return text_latents, image_latents
 
         # get temperature
