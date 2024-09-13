@@ -1,0 +1,5 @@
+data/
+*.egg-info/
+.venv/
+.tox/
+models/
