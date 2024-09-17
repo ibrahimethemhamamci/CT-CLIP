@@ -39,5 +39,6 @@ COPY src /app/src
 RUN pip3 install .
 COPY app.py /app
 
+EXPOSE 8000
 ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["uvicorn app:app --host 0.0.0.0 --port 8080"]
+CMD ["uvicorn app:app --host 0.0.0.0 --port 8000"]
