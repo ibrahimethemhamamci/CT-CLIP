@@ -1,5 +1,7 @@
 ## CT-Clip Preprocess
 
+!! This is deprecated as preprocessing is moved to the dataset scripts.
+
 This section of the repository contains preprocessing scripts specifically designed for handling CT scans. These scripts perform preprocessing steps, including converting nii.gz files to npz files, normalizing pixel values to Hounsfield units (HU), clipping HU values between (-1000,1000), adjusting volume orientations, and standardizing x, y, and z spacings to 0.75, 0.75, and 1.5, respectively.
 
 ## Usage
