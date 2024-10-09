@@ -136,21 +136,21 @@ class CosineAnnealingWarmUpRestarts(lr_scheduler._LRScheduler):
 
 class CTClipInference(nn.Module):
     def __init__(
-        self,
-        CTClip: CTCLIP,
-        *,
-        num_train_steps,
-        batch_size,
-        data_folder: "external_valid",
-        reports_file: "data_reports.xslx",
-        lr = 1e-4,
-        wd = 0.,
-        max_grad_norm = 0.5,
-        save_results_every = 100,
-        save_model_every = 2000,
-        results_folder = './results',
-        labels = "labels.csv",
-        accelerate_kwargs: dict = dict()
+            self,
+            CTClip: CTCLIP,
+            *,
+            num_train_steps,
+            batch_size,
+            data_folder: "external_valid",
+            reports_file: "data_reports.xslx",
+            lr = 1e-4,
+            wd = 0.,
+            max_grad_norm = 0.5,
+            save_results_every = 100,
+            save_model_every = 2000,
+            results_folder = './results',
+            labels = "labels.csv",
+            accelerate_kwargs: dict = dict()
     ):
         super().__init__()
         ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
@@ -177,22 +177,23 @@ class CTClipInference(nn.Module):
 
         self.dl = DataLoader(
             self.ds,
-            num_workers=6,
+            num_workers=3,
             batch_size=1,
             shuffle = True,
         )
         # prepare with accelerator
-        self.dl_iter=cycle(self.dl)
+        #self.dl_iter=cycle(self.dl)
+        self.dl_iter=self.dl
         self.device = self.accelerator.device
         self.CTClip.to(self.device)
         self.lr_scheduler = CosineAnnealingWarmUpRestarts(self.optim,
-                                                  T_0=4000000,    # Maximum number of iterations
-                                                  T_warmup=10000, # Number of warmup steps
-                                                  eta_max=lr)   # Maximum learning rate
+                                                          T_0=4000000,    # Maximum number of iterations
+                                                          T_warmup=10000, # Number of warmup steps
+                                                          eta_max=lr)   # Maximum learning rate
 
 
         (
- 			self.dl_iter,
+            self.dl_iter,
             self.CTClip,
             self.optim,
             self.lr_scheduler
@@ -258,58 +259,28 @@ class CTClipInference(nn.Module):
 
                 for model, filename in models_to_evaluate:
                     model.eval()
-                    predictedall=[]
-                    realall=[]
-                    logits = []
+                    for batch in tqdm.tqdm(self.dl_iter):
+                        valid_data, text, onehotlabels, acc_name = batch
+                        
+                        text_tokens=self.tokenizer(
+                            text, return_tensors="pt", padding="max_length", truncation=True, max_length=512).to(device)
 
-                    text_latent_list = []
-                    image_latent_list = []
-                    accession_names=[]
-                    pathologies = ['Medical material','Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion','Coronary artery wall calcification', 'Hiatal hernia','Lymphadenopathy', 'Emphysema', 'Atelectasis', 'Lung nodule','Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion', 'Mosaic attenuation pattern','Peribronchial thickening', 'Consolidation', 'Bronchiectasis','Interlobular septal thickening']
-                    for i in tqdm.tqdm(range(len(self.ds))):
-                        valid_data, text, onehotlabels, acc_name = next(self.dl_iter)
+                        #_, image_latents, enc_image_send = model(text_tokens, valid_data.cuda(),  device=device, return_latents=True)
+                        text_embeds, enc_image_send, _ =  model(text_tokens, valid_data.cuda(),  device=device, return_latents=True)
+                        # Convert the tensor to a NumPy array
+                        #image_latents_np = image_latents.cpu().detach().numpy()
+                        text_embeds_np = text_embeds.cpu().detach().numpy()
+                        # Save the NumPy array as a .npz file
+                        np.savez(f'{self.results_folder}/text/{acc_name[0]}.npz', arr=text_embeds_np)
 
-                        plotdir = self.result_folder_txt
-                        Path(plotdir).mkdir(parents=True, exist_ok=True)
+                        # Convert the tensor to a NumPy array
+                        enc_image_send_np = enc_image_send.cpu().detach().numpy()
 
-                        predictedlabels=[]
-                        onehotlabels_append=[]
+                        # Save the NumPy array as a .npz file
+                        np.savez(f'{self.results_folder}/image/{acc_name[0]}.npz', arr=enc_image_send_np)
 
-                        for pathology in pathologies:
-                            text = [f"{pathology} is present.", f"{pathology} is not present."]
-                            text_tokens=self.tokenizer(
-                                            text, return_tensors="pt", padding="max_length", truncation=True, max_length=512).to(device)
-
-                            output = model(text_tokens, valid_data.cuda(),  device=device)
-
-                            output = apply_softmax(output)
-
-                            append_out=output.detach().cpu().numpy()
-                            predictedlabels.append(append_out[0])
-
-                        predictedall.append(predictedlabels)
-                        realall.append(onehotlabels.detach().cpu().numpy()[0])
-                        accession_names.append(acc_name[0])
-
-                    realall=np.array(realall)
-                    predictedall=np.array(predictedall)
-
-                    np.savez(f"{plotdir}labels_weights.npz", data=realall)
-                    np.savez(f"{plotdir}predicted_weights.npz", data=predictedall)
-                    with open(f"{plotdir}accessions.txt", "w") as file:
-                        for item in accession_names:
-                            file.write(item + "\n")
-
-
-                    dfs=evaluate_internal(predictedall,realall,pathologies, plotdir)
-
-                    writer = pd.ExcelWriter(f'{plotdir}aurocs.xlsx', engine='xlsxwriter')
-
-                    dfs.to_excel(writer, sheet_name='Sheet1', index=False)
-
-                    writer.close()
-        self.steps += 1
-        return logs
+                self.accelerator.wait_for_everyone()
+        return True
 
 
 
@@ -317,8 +288,9 @@ class CTClipInference(nn.Module):
     def infer(self, log_fn=noop):
         device = next(self.CTClip.parameters()).device
         device=torch.device('cuda')
-        while self.steps < self.num_train_steps:
-            logs = self.train_step()
-            log_fn(logs)
+        while True:
+            finish = self.train_step()
+            if finish:
+                break
 
         self.print('Inference complete')

@@ -101,30 +101,29 @@ if __name__ == '__main__':
     text_encoder.resize_token_embeddings(len(tokenizer))
 
     image_encoder = CTViT(
-            dim = 512,
-            codebook_size = 8192,
-            image_size = 480,
-            patch_size = 30,
-            temporal_patch_size = 15,
-            spatial_depth = 4,
-            temporal_depth = 4,
-            dim_head = 32,
-            heads = 8
-        )
-
+        dim = 512,
+        codebook_size = 8192,
+        image_size = 480,
+        patch_size = 20,
+        temporal_patch_size = 10,
+        spatial_depth = 4,
+        temporal_depth = 4,
+        dim_head = 32,
+        heads = 8
+    )
 
     clip = CTCLIP(
-            image_encoder = image_encoder,
-            text_encoder = text_encoder,
-            dim_image = 2097152,
-            dim_text = 768,
-            dim_latent = 512,
-            extra_latent_projection = False,         # whether to use separate projections for text-to-image vs image-to-text comparisons (CLOOB)
-            use_mlm=False,
-            downsample_image_embeds = False,
-            use_all_token_embeds = False
+        image_encoder = image_encoder,
+        text_encoder = text_encoder,
+        dim_image = 294912,
+        dim_text = 768,
+        dim_latent = 512,
+        extra_latent_projection = False,         # whether to use separate projections for text-to-image vs image-to-text comparisons (CLOOB)
+        use_mlm=False,
+        downsample_image_embeds = False,
+        use_all_token_embeds = False
 
-        )
+    )
 
     num_classes = 18  # you need to specify the number of classes here
     image_classifier = ImageLatentsClassifier(clip, 512, num_classes)

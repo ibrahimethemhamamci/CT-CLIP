@@ -308,7 +308,7 @@ class CTClipTrainer(nn.Module):
                     realall=[]
 
                     #Fast inference on 100 images
-                    for i in range(100):
+                    for i in range(10):
                         print("test")
                         valid_data, text, onehotlabels, name_acc = next(self.valid_dl_iter)
                         valid_data = valid_data.to(device)
@@ -358,19 +358,19 @@ class CTClipTrainer(nn.Module):
                     dfs.to_excel(writer, sheet_name='Sheet1', index=False)
 
                     writer.close()
+                    del output
 
 
         # save model every so often
 
         if self.is_main and not (steps % self.save_model_every):
-            model_save = self.accelerator.unwrap_model(self.CTClip)
-            state_dict = model_save.state_dict()
             model_path = str(self.results_folder / f'CTClip.{steps}.pt')
+            state_dict=self.accelerator.get_state_dict(self.CTClip, unwrap=False)
 
             self.accelerator.save(state_dict, model_path)
 
-
             self.print(f'{steps}: saving model to {str(self.results_folder)}')
+
 
         self.steps += 1
         return logs

@@ -11,7 +11,7 @@ setup(
     'einops>=0.6',
     'ftfy',
     'regex',
-    'torch==2.0.1',
+    #'torch==2.0.1',
     'torchvision',
     "XlsxWriter",
     "h5py",

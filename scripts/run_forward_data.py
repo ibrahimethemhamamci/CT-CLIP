@@ -1,18 +1,14 @@
 import torch
 from transformer_maskgit import CTViT
 from transformers import BertTokenizer, BertModel
-from ct_clip import CTCLIP, TextTransformer
-from CTCLIPTrainer import CTClipTrainer
-
+from ct_clip import CTCLIP
+from forward_data import CTClipInference
+import accelerate
 
 tokenizer = BertTokenizer.from_pretrained('microsoft/BiomedVLP-CXR-BERT-specialized',do_lower_case=True)
-
 text_encoder = BertModel.from_pretrained("microsoft/BiomedVLP-CXR-BERT-specialized")
 
-print("---------")
-print(tokenizer.pad_token_id)
-print(tokenizer.mask_token_id)
-print("-----------")
+text_encoder.resize_token_embeddings(len(tokenizer))
 
 
 image_encoder = CTViT(
@@ -26,14 +22,12 @@ image_encoder = CTViT(
     dim_head = 32,
     heads = 8
 )
-#dim_image = 131072,
-
 
 clip = CTCLIP(
     image_encoder = image_encoder,
     text_encoder = text_encoder,
-    dim_text = 768,
     dim_image = 294912,
+    dim_text = 768,
     dim_latent = 512,
     extra_latent_projection = False,         # whether to use separate projections for text-to-image vs image-to-text comparisons (CLOOB)
     use_mlm=False,
@@ -41,17 +35,16 @@ clip = CTCLIP(
     use_all_token_embeds = False
 
 )
-trainer = CTClipTrainer(
+
+clip.load("path_to_pretrained_model")
+inference = CTClipInference(
     clip,
-    reports_file_train= "path_to_train_reports_csv",
-    reports_file_valid= "path_to_validation_reports_csv",
-    data_train= "path_to_preprocessed_train",
-    data_valid = "path_to_preprocessed_valid",
-    labels = "path_to_validation_labels_csv",
-    batch_size = 8,
-    results_folder="output_folder",
-    num_train_steps = 100001,
-    num_workers = 4,
+    data_folder = '/path_to_data_folder/valid_or_train',
+    reports_file= "path_to_validation_or_train_reports.csv",
+    labels = "path_to_validation_or_train_predicted_labels.csv",
+    batch_size = 1,
+    results_folder = "path_to_results_folder/train_or_validation/"
+    num_train_steps = 1,
 )
 
-trainer.train()
+inference.infer()

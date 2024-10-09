@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import tqdm
-from data_inference import CTReportDatasetinfer
+from data_inference_nii import CTReportDatasetinfer
 
 from transformer_maskgit import CTViT
 from transformers import BertTokenizer, BertModel
@@ -27,14 +27,14 @@ def finetune(args):
 
     # Initialize image encoder and clip model
     image_encoder = CTViT(
-        dim=512, codebook_size=8192, image_size=480, patch_size=30,
-        temporal_patch_size=15, spatial_depth=4, temporal_depth=4,
+        dim=512, codebook_size=8192, image_size=480, patch_size=20,
+        temporal_patch_size=10, spatial_depth=4, temporal_depth=4,
         dim_head=32, heads=8
     )
 
     clip = CTCLIP(
         image_encoder=image_encoder, text_encoder=text_encoder,
-        dim_image=2097152, dim_text=768, dim_latent=512,
+        dim_image=294912, dim_text=768, dim_latent=512,
         extra_latent_projection=False, use_mlm=False,
         downsample_image_embeds=False, use_all_token_embeds=False
     )
@@ -47,7 +47,7 @@ def finetune(args):
         if "latent" in name:
             print(name, param.shape)
         else:
-            param.requires_grad = False
+            param.requires_grad = True
 
 
     ds = CTReportDatasetinfer(data_folder=args.data_folder, csv_file=args.reports_file,labels=args.labels)
@@ -78,6 +78,7 @@ def finetune(args):
 
             logits = []
             labels_tensor_all = labels.float().to(torch.device('cuda'))
+            optimizer.zero_grad()
 
             for k in range(3):
                 logits_list = []
@@ -88,18 +89,20 @@ def finetune(args):
                                    'Atelectasis', 'Lung nodule', 'Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion',
                                    'Mosaic attenuation pattern', 'Peribronchial thickening', 'Consolidation', 'Bronchiectasis',
                                    'Interlobular septal thickening']
+
                 pathologies = pathologies_all[k * 6:(k + 1) * 6]
                 labels_tensor = labels_tensor_all[0][k * 6:(k + 1) * 6]
 
                 for l in range(len(labels_tensor)):
+                    print("testmem")
                     text_yes = ""
                     text_no = ""
                     if labels_tensor[l] == 1:
-                        text_yes = text_yes + f"{pathologies[l]}. "
-                        text_no = text_no + f"not {pathologies[l]}. "
+                        text_yes = text_yes + f"{pathologies[l]} is present. "
+                        text_no = text_no + f"{pathologies[l]} is not present. "
                     if labels_tensor[l] == 0:
-                        text_yes = text_yes + f"not {pathologies[l]}. "
-                        text_no = text_no + f"{pathologies[l]}. "
+                        text_yes = text_yes + f"{pathologies[l]} is not present. "
+                        text_no = text_no + f"{pathologies[l]} is present. "
                     text = [text_yes, text_no]
                     text_tokens = tokenizer(
                         text, return_tensors="pt", padding="max_length", truncation=True, max_length=512).to(
@@ -115,9 +118,8 @@ def finetune(args):
                 concat_labels = torch.cat(labels_list, dim=0)
 
                 loss = loss_fn(concat_logits, concat_labels)
-                optimizer.zero_grad()
-                loss.backward(retain_graph=True)
-                optimizer.step()
+                loss.backward()
+            optimizer.step()
 
             print(get_lr(optimizer))
 

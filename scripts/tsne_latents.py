@@ -1,116 +1,137 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-import tqdm
 import numpy as np
-from sklearn.manifold import TSNE  # Import TSNE from sklearn.manifold
+from sklearn.manifold import TSNE
+import os
+import tqdm
 
-def read_txt(file_path):
-    with open(file_path, 'r') as f:
-        accessions = f.readlines()
-    return [line.strip() for line in accessions]
+def map_accessions_to_labels(accession, df):
+    accession = accession.replace(".npz", ".nii.gz")
+    row = df[df['VolumeName'] == accession]
+    if not row.empty:
+        try:
+            return row.iloc[0, 1:]  # Return all label values as a numpy array
+        except:
+            return 0
+    else:
+        print(f"Label not found for {accession}")
+        return np.zeros(df.shape[1] - 1)  # Return an array of zeros if no label found
 
-def map_accessions_to_labels(accessions, csv_path, i, isValid=False):
-    # Load the csv file
-    df = pd.read_csv(csv_path)
+def process_file(file_name, directory, df):
+    if file_name.endswith(".npz"):
+        file_path = os.path.join(directory, file_name)
+        data = np.load(file_path, mmap_mode='r')['arr'][0]
+        labels = map_accessions_to_labels(file_name, df)
+        return data, labels
+    return None, None
 
-    # For each accession, find the corresponding row in the dataframe
-    # and sum the labels. Store the results in a list.
-    label_sums = []
-    for acc in tqdm.tqdm(accessions):
-        if isValid:
-            acc_last = acc[-1]
-            acc = acc[:-1]
-            acc = acc + "_" + acc_last + "_1.nii.gz"
-        row = df[df['AccessionNo'] == acc]
+def load_latents_and_labels(directory, df):
+    files = [f for f in os.listdir(directory) if f.endswith(".npz")]
 
-        if not row.empty:
-            #label_sum = row.iloc[:, 1:].sum(axis=1).values[0]  # Assuming first column is AccessionNo
-            label = row.iloc[:,i+1].values[0]
-            #print(label)
-            """
-            if label_sum == 0:
-                label = 1
-            elif 4 > label_sum > 0:
-                label = 0
-            elif 7 > label_sum > 3:
-                label = 0
-            elif 10 > label_sum > 6:
-                label = 0
-            elif 13 > label_sum > 9:
-                label = 0
-            elif label_sum > 12:
-                label = 0
-            """
-            label_sums.append(label)
-        else:
-            label_sums.append(0)  # Default to 0 if accession not found
+    latents = []
+    labels = []
+    for file_name in tqdm.tqdm(files):
+        data, label = process_file(file_name, directory, df)
+        if data is not None:
+            latents.append(data)
+            labels.append(label)
 
-    return np.array(label_sums)
+    latents = np.vstack(latents)
+    label_dict = {f: l for f, l in zip(files, labels)}
 
-def load_and_concatenate(train_path1, train_path2, validation_path):
-    # Load the .npz files
-    train_data1 = np.load(train_path1)
-    train_data2 = np.load(train_path2)
-    validation_data = np.load(validation_path)
-
-    # Extract the latent values using the assumed key 'latent_values'
-    train_latents1 = train_data1['data']
-    train_latents2 = train_data2['data']
-    validation_latents = validation_data['data']
-    all_latents = np.vstack([train_latents1,train_latents2, validation_latents])
-    all_latents = all_latents[:, 0, :]
-
-    return all_latents
+    return latents, label_dict
 
 def tsne_projection(data, n_components=2, perplexity=30, n_iter=300):
-    # Create a TSNE object with the desired parameters
-    tsne = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter, random_state=1231)
-
-    # Fit the TSNE model to your data and transform it
+    tsne = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter, random_state=41)
     embedding = tsne.fit_transform(data)
     return embedding
 
-def plot_tsne(embedding, labels, k):
+def plot_tsne(embedding, labels, k, concat_dict):
     unique_labels = np.unique(labels)
     color_list = ["#000000", "#ff0066", "#117f80", "#ab66ff", "#66ccfc", "#FF7F50"]
+    color_list_r = list(reversed(color_list))
+    print(color_list_r)
+    #color_list = ["#000000", "#ff0066", "#117f80"]
     annots = ["Others", f"Class {k + 1}", "4-6 Pathologies", "7-9 Pathologies", "10-12 Pathologies", ">13 Pathologies"]
-    i = 0
-    for label in tqdm.tqdm(unique_labels):
+    names_save = []
+    for i, label in enumerate(reversed(unique_labels)):
         idx = np.where(labels == label)
-        plt.scatter(embedding[idx, 0], embedding[idx, 1], s=2, alpha=0.5, color=color_list[i], label=f'{annots[i]}')
-        i = i + 1
+        plt.scatter(embedding[idx, 0], embedding[idx, 1], s=1, alpha=0.8, color=color_list_r[i], label=f'{annots[i]}')
+        if label == 0 or label== 1:
+            for id in idx[0]:
+                print(id)
+                print("labeltrue")
+                if embedding[id, 0] > 4:
+                    if embedding[id,1] < 1:
+                        keys_dict = list(concat_dict.keys())
+                        names_save.append(keys_dict[id].replace(".npz",".nii.gz"))
+                        print(keys_dict[id])
+    df1 = pd.read_csv('train_predicted_labels.csv')
+    df2 = pd.read_csv('valid_predicted_labels.csv')
+    merged_df = pd.merge(df1, df2, how='outer')
+    filtered_df = merged_df[merged_df['VolumeName'].isin(names_save)]
+    #filtered_df.to_csv('filtered_output.csv', index=False)
 
-    #name = "t-SNE"
-    pathologies = ['Medical material','Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion','Coronary artery wall calcification', 'Hiatal hernia','Lymphadenopathy', 'Emphysema', 'Atelectasis', 'Lung nodule','Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion', 'Mosaic attenuation pattern','Peribronchial thickening', 'Consolidation', 'Bronchiectasis','Interlobular septal thickening']
+
+
+    pathologies = ['Medical material', 'Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion',
+                       'Coronary artery wall calcification', 'Hiatal hernia', 'Lymphadenopathy', 'Emphysema',
+                       'Atelectasis', 'Lung nodule', 'Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion',
+                       'Mosaic attenuation pattern', 'Peribronchial thickening', 'Consolidation', 'Bronchiectasis',
+                       'Interlobular septal thickening']
     name = pathologies[k]
 
-    plt.title(f"{name} (Image Latents)")
+    plt.title(f"t-SNE (Image Latents)")
     plt.xlabel("t-SNE 1")
     plt.ylabel("t-SNE 2")
-    plt.savefig(f"tsne_plots_test2/image_diseases/{name}_healthyornot_text.png", dpi=600)
+    #plt.gca().invert_yaxis()
+    plt.savefig(f"new_image_latents.png", dpi=600)
     plt.show()
     plt.clf()
 
 if __name__ == "__main__":
-    train_path_txt = "path_to_train_accessions.txt"
-    validation_path_txt = "path_to_valid_accessions.txt"
-    train_csv_path = "path_to_train_labels.csv"
-    csv_path = "path_to_valid_labels.csv"
+    latent_directory_train = "./path_to_latents/train/text_or_image"  # Directory containing train .npz files
+    latent_directory_valid = "./path_to_latents/valid/text_or_image"  # Directory containing validation .npz files
+    train_csv_path = "path_to_train_predicted_labels.csv"
+    validation_csv_path = "path_to_valid_predicted_labels.csv"
+    train_df = pd.read_csv(train_csv_path)
+    validation_df = pd.read_csv(validation_csv_path)
 
-    train_accessions = read_txt(train_path_txt)
-    validation_accessions = read_txt(validation_path_txt)
+    validation_latents, validation_label_dict = load_latents_and_labels(latent_directory_valid, validation_df)
+    # Cache latents and labels
+    train_latents, train_label_dict = load_latents_and_labels(latent_directory_train, train_df)
 
-    for i in tqdm.tqdm(range(18)):
-        train_labels_sum = map_accessions_to_labels(train_accessions, train_csv_path, i)
-        validation_labels_sum = map_accessions_to_labels(validation_accessions, csv_path, i, isValid=True)
+    all_latents = np.vstack([train_latents, validation_latents])
+    #all_latents = validation_latents
+    embedding = tsne_projection(all_latents)  # Compute t-SNE embedding only once
 
-        combined_labels_sum = np.concatenate([train_labels_sum, validation_labels_sum])
+    def categorize_pathologies(count):
+        if count == 0:
+            return 0 # No pathology
+        #else:
+        #    return 1
 
-        train_path1 = "path_to_train_image_latents.npz" ##could be done for text as well
-        validation_path = "path_to_valid_image_latents.npz" ##could be done for text as well
+        elif 1 <= count <= 3:
+            return 1  # 1-3 Pathologies
+        elif 4 <= count <= 6:
+            return 2  # 4-6 Pathologies
+        elif 7 <= count <= 9:
+            return 3  # 7-9 Pathologies
+        elif 10 <= count <= 12:
+            return 4  # 10-12 Pathologies
+        else:
+            return 5  # >13 Pathologies
 
-        if i == 0:
-            all_latents = load_and_concatenate(train_path1,train_path2, validation_path)
-            embedding = tsne_projection(all_latents)
+    for i in range(1):
+        train_labels_count = np.array([np.sum(train_label_dict[file_name]) for file_name in train_label_dict.keys()])
+        validation_labels_count = np.array([np.sum(validation_label_dict[file_name]) for file_name in validation_label_dict.keys()])
 
-        plot_tsne(embedding, combined_labels_sum, i)
+        # Combine train and validation labels
+        combined_labels_count = np.concatenate([train_labels_count, validation_labels_count])
+
+
+        concat_dict = train_label_dict | validation_label_dict
+        # Categorize the counts into different groups
+        combined_labels = np.array([categorize_pathologies(count) for count in combined_labels_count])
+
+        plot_tsne(embedding, combined_labels, i, concat_dict)
