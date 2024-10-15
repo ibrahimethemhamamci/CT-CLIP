@@ -52,11 +52,11 @@ For your convenience, we provide access to pretrained models directly. These mod
 
 You can download the models from the following links:
 
-- **CT-CLIP Model**: [Download Here](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE/resolve/main/models/CT_CLIP_zeroshot.pt?download=true)
+- **CT-CLIP**: [Download Here](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE/resolve/main/models/CT_CLIP_zeroshot.pt?download=true)
 
-- **CT-VocabFine Model**: [Download Here](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE/resolve/main/models/CT_VocabFine.pt?download=true)
+- **CT-CLIP (VocabFine)**: [Download Here](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE/resolve/main/models/CT_VocabFine.pt?download=true)
 
-- **CT-LiPro Model**: [Download Here](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE/resolve/main/models/CT_LiPro.pt?download=true)
+- **CT-CLIP (LiPro)**: [Download Here](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE/resolve/main/models/CT_LiPro.pt?download=true)
   
 - **Text Classifier Model**: [Download Here](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE/resolve/main/models/RadBertClassifier.pth?download=true)
 
