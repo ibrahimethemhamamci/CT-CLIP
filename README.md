@@ -43,6 +43,8 @@ For details on the inference and evaluation of zero-shot CT-CLIP and fine-tuned 
 
 For details on the inference of text classifier, please navigate to [text_classifier](text_classifier).
 
+Inference with CT-CLIP (zeroshot) and CT-CLIP (vocabfine) takes 1.5 seconds for 18 pathologies for a single CT volume. Inference with CT-LiPro takes 0.5 seconds for 18 pathologies for a single CT volume.
+
 
 ## Pretrained Models
 
