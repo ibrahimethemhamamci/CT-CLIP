@@ -1,5 +1,5 @@
 # CT-CLIP
-Welcome to the official repository of CT-CLIP, a pioneering work in 3D medical imaging with a particular focus on chest CT volumes. CT-CLIP provides an open-source codebase, pre-trained models, and a unique dataset (CT-RATE) of chest CT volumes paired with radiology text reports, all freely accessible to researchers. You can access the dataset and pretrained model weights via the [HuggingFace repository](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE).
+Welcome to the official repository of CT-CLIP, a pioneering work in 3D medical imaging with a particular focus on chest CT volumes. CT-CLIP provides an open-source codebase and pre-trained models, all freely accessible to researchers. CT-CLIP is also utilized to develop a cutting-edge visual-language chat model [(CT-CHAT)](https://github.com/ibrahimethemhamamci/CT-CHAT) designed specifically for 3D chest CT volumes. You can access the training dataset (CT-RATE) consisting of chest CT volumes paired with radiology text reports via the [HuggingFace repository](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE).
 
 
 <p align="center">
