@@ -1,4 +1,4 @@
-## CT-Clip Preprocess
+## CT-CLIP Preprocess
 
 !! This is deprecated as preprocessing is moved to the dataset scripts.
 
