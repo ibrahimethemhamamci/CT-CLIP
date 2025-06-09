@@ -1,7 +1,7 @@
 
 ## CT-CLIP: Revolutionizing Abnormality Detection through Chest CT Volumes and Radiology Reports
 
-Before proceeding with training and inference, ensure that you have accurately downloaded the dataset and installed the necessary dependencies as outlined in the [Main Page](..), and preprocess the dataset according to the instructions provided in [data preprocess](../data_preprocess).
+Before proceeding with training and inference, ensure that you have accurately downloaded the dataset and installed the necessary dependencies as outlined in the [Main Page](..), and preprocess the dataset.
 
 ## Training
 
