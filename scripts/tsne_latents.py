@@ -66,13 +66,6 @@ def plot_tsne(embedding, labels, k, concat_dict):
                         keys_dict = list(concat_dict.keys())
                         names_save.append(keys_dict[id].replace(".npz",".nii.gz"))
                         print(keys_dict[id])
-    df1 = pd.read_csv('train_predicted_labels.csv')
-    df2 = pd.read_csv('valid_predicted_labels.csv')
-    merged_df = pd.merge(df1, df2, how='outer')
-    filtered_df = merged_df[merged_df['VolumeName'].isin(names_save)]
-    #filtered_df.to_csv('filtered_output.csv', index=False)
-
-
 
     pathologies = ['Medical material', 'Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion',
                        'Coronary artery wall calcification', 'Hiatal hernia', 'Lymphadenopathy', 'Emphysema',
