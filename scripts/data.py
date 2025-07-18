@@ -1,12 +1,9 @@
 import os
 import glob
-import json
 import torch
 import pandas as pd
 import numpy as np
-from PIL import Image
 from torch.utils.data import Dataset
-import torchvision.transforms as transforms
 from functools import partial
 import torch.nn.functional as F
 import nibabel as nib
@@ -37,10 +34,10 @@ def resize_array(array, current_spacing, target_spacing):
     return resized_array
 
 class CTReportDataset(Dataset):
-    def __init__(self, data_folder, csv_file, min_slices=20, resize_dim=500, force_num_frames=True):
+    def __init__(self, data_folder, reports_file, meta_file, min_slices=20, resize_dim=500, force_num_frames=True):
         self.data_folder = data_folder
         self.min_slices = min_slices
-        self.accession_to_text = self.load_accession_text(csv_file)
+        self.accession_to_text = self.load_accession_text(reports_file)
         self.paths=[]
         self.samples = self.prepare_samples()
         percent = 80
@@ -50,20 +47,14 @@ class CTReportDataset(Dataset):
         print(len(self.samples))
         self.count = 0
 
+        df = pd.read_csv(meta_file) #select the metadata
+        self.nii_to_tensor = partial(self.nii_img_to_tensor, df = df)
 
-        #self.resize_dim = resize_dim
-        #self.resize_transform = transforms.Resize((resize_dim, resize_dim))
-        self.transform = transforms.Compose([
-            transforms.Resize((resize_dim,resize_dim)),
-            transforms.ToTensor()
-        ])
-        self.nii_to_tensor = partial(self.nii_img_to_tensor, transform = self.transform)
-
-    def load_accession_text(self, csv_file):
-        df = pd.read_csv(csv_file)
+    def load_accession_text(self, reports_file):
+        df = pd.read_csv(reports_file)
         accession_to_text = {}
         for index, row in df.iterrows():
-            accession_to_text[row['AccessionNo']] = row["Findings_EN"],row['Impressions_EN']
+            accession_to_text[row['VolumeName']] = row["Findings_EN"],row['Impressions_EN']
 
         return accession_to_text
 
@@ -98,11 +89,10 @@ class CTReportDataset(Dataset):
 
 
 
-    def nii_img_to_tensor(self, path, transform):
+    def nii_img_to_tensor(self, path, df):
         nii_img = nib.load(str(path))
         img_data = nii_img.get_fdata()
 
-        df = pd.read_csv("train_metadata.csv") #select the metadata
         file_name = path.split("/")[-1]
         row = df[df['VolumeName'] == file_name]
         slope = float(row["RescaleSlope"].iloc[0])
