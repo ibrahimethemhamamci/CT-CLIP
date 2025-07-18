@@ -3,27 +3,21 @@ from shutil import rmtree
 from datetime import timedelta
 
 from transformer_maskgit.optimizer import get_optimizer
-from transformers import BertTokenizer, BertModel
+from transformers import BertTokenizer
 
-from eval import evaluate_internal, plot_roc, accuracy, sigmoid, bootstrap, compute_cis
-from sklearn.metrics import classification_report, confusion_matrix, multilabel_confusion_matrix, f1_score, accuracy_score
-
+from eval import evaluate_internal
+from sklearn.metrics import f1_score, accuracy_score
 
 import torch
 from torch import nn
-from torch.utils.data import Dataset, DataLoader, random_split
-from torch.utils.data.distributed import DistributedSampler
+from torch.utils.data import DataLoader
 
 from data import CTReportDataset
-from data_inference import CTReportDatasetinfer
+from data_inference_nii import CTReportDatasetinfer
 
 import numpy as np
 import pandas as pd
-import tqdm
 
-
-from einops import rearrange
-import accelerate
 from accelerate import Accelerator
 from accelerate import DistributedDataParallelKwargs
 from accelerate.utils import InitProcessGroupKwargs
@@ -31,7 +25,6 @@ from accelerate.utils import InitProcessGroupKwargs
 import math
 import torch.optim.lr_scheduler as lr_scheduler
 from ct_clip import CTCLIP
-import os
 
 
 # helpers
@@ -48,30 +41,6 @@ def apply_softmax(array):
     softmax = torch.nn.Softmax(dim=0)
     softmax_array = softmax(array)
     return softmax_array
-
-
-
-def tensor_to_nifti(tensor, path, affine=np.eye(4)):
-    """
-    Save tensor as a NIfTI file.
-
-    Args:
-        tensor (torch.Tensor): The input tensor with shape (D, H, W) or (C, D, H, W).
-        path (str): The path to save the NIfTI file.
-        affine (np.ndarray, optional): The affine matrix for the NIfTI file. Defaults to np.eye(4).
-    """
-
-    tensor = tensor.cpu()
-
-    if tensor.dim() == 4:
-        # Assume single channel data if there are multiple channels
-        if tensor.size(0) != 1:
-            print("Warning: Saving only the first channel of the input tensor")
-        tensor = tensor.squeeze(0)
-    tensor=tensor.swapaxes(0,2)
-    numpy_data = tensor.detach().numpy().astype(np.float32)
-    nifti_img = nib.Nifti1Image(numpy_data, affine)
-    nib.save(nifti_img, path)
 
 def exists(val):
     return val is not None
@@ -152,14 +121,16 @@ class CTClipTrainer(nn.Module):
         data_valid = "valid",
         reports_file_train = "data_reports.xslx",
         reports_file_valid = "data_reports.xslx",
+        train_meta_file = "meta_data.csv",
+        valid_meta_file = "meta_data.csv",
         labels = "labels.csv",
         tokenizer = None,
         lr = 1.25e-6,
         wd = 0.,
         max_grad_norm = 0.5,
-        save_results_every = 1000,
-        save_model_every = 1000 ,
-        results_folder = '/shares/menze.dqbm.uzh/ihamam/ctclip/',
+        save_results_every = 1,
+        save_model_every = 1 ,
+        results_folder = './ctclip/',
         num_workers = 8,
         accelerate_kwargs: dict = dict()
     ):
@@ -184,11 +155,10 @@ class CTClipTrainer(nn.Module):
 
         self.max_grad_norm = max_grad_norm
         self.lr=lr
-        # Load the pre-trained weights
-        self.ds = CTReportDataset(data_folder=data_train, csv_file=reports_file_train)
 
-        self.valid_ds = CTReportDatasetinfer(data_folder=data_valid, csv_file=reports_file_valid, labels = labels)
+        self.ds = CTReportDataset(data_folder=data_train, reports_file=reports_file_train, meta_file=train_meta_file)
 
+        self.valid_ds = CTReportDatasetinfer(data_folder=data_valid, reports_file=reports_file_valid, meta_file=valid_meta_file, labels = labels)
 
         self.dl = DataLoader(
             self.ds,
@@ -232,8 +202,6 @@ class CTClipTrainer(nn.Module):
 
         self.results_folder.mkdir(parents=True, exist_ok=True)
 
-
-
     def save(self, path):
         if not self.accelerator.is_local_main_process:
             return
@@ -274,7 +242,7 @@ class CTClipTrainer(nn.Module):
 
         # update CTClip model
         video, text = next(self.dl_iter)
-        print(video.shape)
+
         device=self.device
         video=video.to(device)
         mask = torch.ones((video.shape[0], video.shape[2])).bool().to(device)
@@ -294,8 +262,6 @@ class CTClipTrainer(nn.Module):
         self.optim.step()
         self.optim.zero_grad()
         self.print(f"{steps}: loss: {logs['loss']}")
-
-
 
         if self.is_main and not (steps % self.save_results_every):
             with torch.no_grad():
@@ -332,9 +298,8 @@ class CTClipTrainer(nn.Module):
 
                             output = apply_softmax(output)
 
-                            print(output)
                             append_out=output.detach().cpu().numpy()
-                            print(output)
+
                             if output[0]>output[1]:
                                 predictedlabels.append(append_out[0])
                             else:
@@ -371,15 +336,11 @@ class CTClipTrainer(nn.Module):
 
             self.print(f'{steps}: saving model to {str(self.results_folder)}')
 
-
         self.steps += 1
         return logs
 
 
-
     def train(self, log_fn=noop):
-        device = next(self.CTClip.parameters()).device
-        device=torch.device('cuda')
         while self.steps < self.num_train_steps:
             logs = self.train_step()
             log_fn(logs)

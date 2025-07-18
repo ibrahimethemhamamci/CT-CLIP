@@ -3,7 +3,7 @@ import time
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from data_inference import CTReportDatasetinfer
+from data_inference_nii import CTReportDatasetinfer
 
 from transformer_maskgit import CTViT
 from transformers import BertTokenizer, BertModel
@@ -26,7 +26,7 @@ class ImageLatentsClassifier(nn.Module):
 
     def forward(self, *args, **kwargs):
         kwargs['return_latents'] = True
-        _, image_latents = self.trained_model(*args, **kwargs)
+        _, image_latents, _ = self.trained_model(*args, **kwargs)
         image_latents = self.relu(image_latents)
         image_latents = self.dropout(image_latents)  # Apply dropout on the latents
         return self.classifier(image_latents)
@@ -63,7 +63,7 @@ def finetune(args):
     image_classifier = ImageLatentsClassifier(clip, 512, num_classes)
 
     # Load dataset for fine-tuning
-    ds = CTReportDatasetinfer(data_folder=args.data_folder, csv_file=args.reports_file, labels = args.labels)
+    ds = CTReportDatasetinfer(data_folder=args.data_folder, reports_file=args.reports_file, meta_file=args.meta_file, labels = args.labels)
     dl = DataLoader(ds, num_workers=8, batch_size=8, shuffle=True)
     num_batches = len(dl)
 
@@ -96,7 +96,7 @@ def finetune(args):
             text_tokens = tokenizer([" "], return_tensors="pt", padding="max_length", truncation=True, max_length=512).to("cuda")
 
             data_time = time.time() - start_time
-            logits = model(text_tokens, inputs, device=torch.device('cuda'))
+            logits = model(text_tokens, inputs, device=torch.device('cuda'), return_latents=True)
             loss = loss_fn(logits, labels)
 
             optimizer.zero_grad()

@@ -7,7 +7,7 @@ Before proceeding with training and inference, ensure that you have accurately d
 
 ### Training CT-CLIP
 
-For training the zero-shot CT-CLIP model, adjust the parameters `reports_file_train`, `reports_file_valid`, `data_train`, `data_valid`, and `labels` in the "run_train.py" script to correspond to the appropriate paths for the downloaded and preprocessed train and validation folder. Then, execute the training script with the following command:
+For training the zero-shot CT-CLIP model, adjust the parameters `reports_file_train`, `reports_file_valid`, `data_train`, `data_valid`, `train_meta_file`, `valid_meta_file`, and `labels` in the "run_train.py" script to correspond to the appropriate paths for the downloaded and preprocessed train and validation folder. Then, execute the training script with the following command:
 
 ```bash
 $ python run_train.py
@@ -39,6 +39,7 @@ $ python ct_vocabfine_train.py \
     --pretrained path_to_pretrained_clip_model \
     --data-folder path_to_preprocessed_train_folder \
     --reports-file path_to_train_reports_csv \
+    --meta-file paths_to_train_meta_csv \
     --labels path_to_train_labels_csv
 ```
 
@@ -56,6 +57,7 @@ $ python ct_lipro_train.py \
     --pretrained path_to_pretrained_clip_model \
     --data-folder path_to_preprocessed_train_folder \
     --reports-file path_to_train_reports_csv \
+    --meta-file paths_to_train_meta_csv \
     --labels path_to_train_labels_csv
 ```
 
@@ -67,7 +69,7 @@ As CT-VocabFine is an open-vocabulary fine-tuning method, the inference of CT-Vo
 
 ### Inference of CT-CLIP and CT-VocabFine
 
-For inference of CT-CLIP and CT-VocabFine models, adjust the path for the model script either for CT-CLIP or CT-VocabFine, adjust the parameters `data_folder`, `reports_file`, and `labels` in the "run_zero_shot.py" script to correspond to the appropriate paths for the downloaded and preprocessed validation folder. Then, execute the training script with the following command:
+For inference of CT-CLIP and CT-VocabFine models, adjust the path for the model script either for CT-CLIP or CT-VocabFine, adjust the parameters `data_folder`, `reports_file`, `meta_file` and `labels` in the "run_zero_shot.py" script to correspond to the appropriate paths for the downloaded and preprocessed validation folder. Then, execute the training script with the following command:
 
 ```bash
 $ python run_zero_shot.py
@@ -78,14 +80,11 @@ For inference of CT-LiPro, utilize the following script with accurate paths:
 
 ```bash
 $ python ct_lipro_inference.py \
-    --lr 1e-5 \
-    --wd 0.1 \
-    --epochs 10 \
-    --warmup_length 10000 \
     --save path_to_save_folder \
     --pretrained path_to_trained_lipro_model \
     --data-folder path_to_preprocessed_validation_folder \
     --reports-file path_to_valid_reports_csv \
+    --meta-file paths_to_train_meta_csv \
     --labels path_to_valid_labels_csv
 ```
 

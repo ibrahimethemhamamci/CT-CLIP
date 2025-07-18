@@ -66,13 +66,6 @@ def plot_tsne(embedding, labels, k, concat_dict):
                         keys_dict = list(concat_dict.keys())
                         names_save.append(keys_dict[id].replace(".npz",".nii.gz"))
                         print(keys_dict[id])
-    df1 = pd.read_csv('train_predicted_labels.csv')
-    df2 = pd.read_csv('valid_predicted_labels.csv')
-    merged_df = pd.merge(df1, df2, how='outer')
-    filtered_df = merged_df[merged_df['VolumeName'].isin(names_save)]
-    #filtered_df.to_csv('filtered_output.csv', index=False)
-
-
 
     pathologies = ['Medical material', 'Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion',
                        'Coronary artery wall calcification', 'Hiatal hernia', 'Lymphadenopathy', 'Emphysema',
@@ -90,10 +83,10 @@ def plot_tsne(embedding, labels, k, concat_dict):
     plt.clf()
 
 if __name__ == "__main__":
-    latent_directory_train = "./path_to_latents/train/text_or_image"  # Directory containing train .npz files
-    latent_directory_valid = "./path_to_latents/valid/text_or_image"  # Directory containing validation .npz files
-    train_csv_path = "path_to_train_predicted_labels.csv"
-    validation_csv_path = "path_to_valid_predicted_labels.csv"
+    latent_directory_train = "./path_to_latents/train/text_or_image"  #TODO: Directory containing train .npz files
+    latent_directory_valid = "./path_to_latents/valid/text_or_image"  #TODO: Directory containing validation .npz files
+    train_csv_path = "path_to_train_predicted_labels.csv"  #TODO: Path to train labels CSV
+    validation_csv_path = "path_to_valid_predicted_labels.csv" #TODO: Path to validation labels CSV
     train_df = pd.read_csv(train_csv_path)
     validation_df = pd.read_csv(validation_csv_path)
 

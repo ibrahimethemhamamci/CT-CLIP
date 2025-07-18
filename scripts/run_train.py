@@ -1,7 +1,6 @@
-import torch
 from transformer_maskgit import CTViT
 from transformers import BertTokenizer, BertModel
-from ct_clip import CTCLIP, TextTransformer
+from ct_clip import CTCLIP
 from CTCLIPTrainer import CTClipTrainer
 
 
@@ -43,13 +42,15 @@ clip = CTCLIP(
 )
 trainer = CTClipTrainer(
     clip,
-    reports_file_train= "path_to_train_reports_csv",
-    reports_file_valid= "path_to_validation_reports_csv",
-    data_train= "path_to_preprocessed_train",
-    data_valid = "path_to_preprocessed_valid",
-    labels = "path_to_validation_labels_csv",
+    reports_file_train= "path_to_train_reports_csv", #TODO: Path to train reports CSV
+    reports_file_valid= "path_to_validation_reports_csv", #TODO: Path to validation reports CSV
+    data_train= "path_to_preprocessed_train", #TODO: Path to preprocessed train data
+    data_valid = "path_to_preprocessed_valid", #TODO: Path to preprocessed validation data
+    train_meta_file = "path_to_train_metadata_csv", #TODO: Path to train metadata CSV
+    valid_meta_file = "path_to_validation_metadata_csv", #TODO: Path to validation metadata CSV
+    labels = "path_to_validation_labels_csv", #TODO: Path to validation labels CSV
     batch_size = 8,
-    results_folder="output_folder",
+    results_folder="output_folder", #TODO: Path to save output results
     num_train_steps = 100001,
     num_workers = 4,
 )
