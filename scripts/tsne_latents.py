@@ -83,10 +83,10 @@ def plot_tsne(embedding, labels, k, concat_dict):
     plt.clf()
 
 if __name__ == "__main__":
-    latent_directory_train = "./path_to_latents/train/text_or_image"  # Directory containing train .npz files
-    latent_directory_valid = "./path_to_latents/valid/text_or_image"  # Directory containing validation .npz files
-    train_csv_path = "path_to_train_predicted_labels.csv"
-    validation_csv_path = "path_to_valid_predicted_labels.csv"
+    latent_directory_train = "./path_to_latents/train/text_or_image"  #TODO: Directory containing train .npz files
+    latent_directory_valid = "./path_to_latents/valid/text_or_image"  #TODO: Directory containing validation .npz files
+    train_csv_path = "path_to_train_predicted_labels.csv"  #TODO: Path to train labels CSV
+    validation_csv_path = "path_to_valid_predicted_labels.csv" #TODO: Path to validation labels CSV
     train_df = pd.read_csv(train_csv_path)
     validation_df = pd.read_csv(validation_csv_path)
 
