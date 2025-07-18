@@ -50,7 +50,7 @@ def finetune(args):
             param.requires_grad = True
 
 
-    ds = CTReportDatasetinfer(data_folder=args.data_folder, csv_file=args.reports_file,labels=args.labels)
+    ds = CTReportDatasetinfer(data_folder=args.data_folder, reports_file=args.reports_file, meta_file=args.meta_file, labels = args.labels)
     dl = DataLoader(ds, num_workers=8, batch_size=1, shuffle=True)
     num_batches = len(dl)
 
@@ -68,6 +68,12 @@ def finetune(args):
     optimizer = torch.optim.AdamW(params, lr=args.lr, weight_decay=args.wd)
     scheduler = cosine_lr(optimizer, args.lr, args.warmup_length, args.epochs * num_batches)
 
+    pathologies_all = ['Medical material', 'Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion',
+                        'Coronary artery wall calcification', 'Hiatal hernia', 'Lymphadenopathy', 'Emphysema',
+                        'Atelectasis', 'Lung nodule', 'Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion',
+                        'Mosaic attenuation pattern', 'Peribronchial thickening', 'Consolidation', 'Bronchiectasis',
+                        'Interlobular septal thickening']
+    
     for epoch in range(args.epochs):
         for i, batch in tqdm.tqdm(enumerate(dl)):
             start_time = time.time()
@@ -83,12 +89,6 @@ def finetune(args):
             for k in range(3):
                 logits_list = []
                 labels_list = []
-
-                pathologies_all = ['Medical material', 'Arterial wall calcification', 'Cardiomegaly', 'Pericardial effusion',
-                                   'Coronary artery wall calcification', 'Hiatal hernia', 'Lymphadenopathy', 'Emphysema',
-                                   'Atelectasis', 'Lung nodule', 'Lung opacity', 'Pulmonary fibrotic sequela', 'Pleural effusion',
-                                   'Mosaic attenuation pattern', 'Peribronchial thickening', 'Consolidation', 'Bronchiectasis',
-                                   'Interlobular septal thickening']
 
                 pathologies = pathologies_all[k * 6:(k + 1) * 6]
                 labels_tensor = labels_tensor_all[0][k * 6:(k + 1) * 6]
@@ -107,6 +107,7 @@ def finetune(args):
                     text_tokens = tokenizer(
                         text, return_tensors="pt", padding="max_length", truncation=True, max_length=512).to(
                         torch.device('cuda'))
+
                     output = model(text_tokens, inputs, device=torch.device('cuda'))
 
                     logits = F.softmax(output, dim=0)
